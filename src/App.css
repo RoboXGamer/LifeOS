@@ -1,0 +1,60 @@
+.center {
+  display: flex;
+  flex-direction: column;
+  place-items: center;
+  flex-grow: 1;
+
+  @media (max-width: 1024px) {
+    padding: 32px 20px 24px;
+    gap: 1.125rem;
+  }
+}
+
+hr {
+  width: 100%;
+}
+
+#todo-form-container {
+  margin-block: 1rem;
+}
+
+form {
+  display: flex;
+
+  > * {
+    font: inherit;
+    font-size: 16px;
+    padding: 4px 16px;
+  }
+}
+
+#todo {
+  border: 2px solid #777;
+  min-width: 35ch;
+}
+
+button {
+  padding: 4px 16px;
+  color: var(--accent);
+  background: var(--accent-bg);
+  border: 2px solid transparent;
+  transition: border-color 0.3s;
+
+  &:hover {
+    border-color: var(--accent-border);
+  }
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+#todo-list-container {
+  width: 100%;
+  li {
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+}

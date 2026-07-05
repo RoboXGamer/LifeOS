@@ -1,0 +1,22 @@
+{
+  "name": "draft1",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --open",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@solidjs/web": "2.0.0-beta.15",
+    "nanoid": "^5.1.16",
+    "solid-js": "2.0.0-beta.15"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.0",
+    "typescript": "~6.0.2",
+    "vite": "^8.1.1",
+    "vite-plugin-solid": "3.0.0-next.5"
+  }
+}
