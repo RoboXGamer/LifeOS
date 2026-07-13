@@ -1,20 +1,19 @@
-.center {
+.split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  padding: 2rem;
+  min-height: 100vh;
+}
+
+.column {
   display: flex;
   flex-direction: column;
-  place-items: center;
-  flex-grow: 1;
-
-  @media (max-width: 1024px) {
-    padding: 32px 20px 24px;
-    gap: 1.125rem;
-  }
+  gap: 1rem;
 }
 
-hr {
-  width: 100%;
-}
-
-#item-form-container {
+#item-form-container,
+#area-form-container {
   margin-block: 1rem;
 }
 
@@ -28,9 +27,11 @@ form {
   }
 }
 
-#item {
+#item,
+#area {
   border: 2px solid #777;
-  min-width: 35ch;
+  min-width: 25ch;
+  flex: 1;
 }
 
 button {
@@ -49,7 +50,8 @@ button {
   }
 }
 
-#item-list-container {
+#item-list-container,
+#area-list-container {
   width: 100%;
   li {
     display: flex;
@@ -57,4 +59,22 @@ button {
     padding: 1rem;
     border-bottom: 1px solid var(--border);
   }
+}
+
+#item-list-container li {
+  cursor: grab;
+}
+
+#item-list-container li:active {
+  cursor: grabbing;
+}
+
+#area-list-container li {
+  cursor: pointer;
+}
+
+#area-list-container li.drag-over {
+  background: var(--accent-bg);
+  outline: 2px dashed var(--accent);
+  outline-offset: -2px;
 }
