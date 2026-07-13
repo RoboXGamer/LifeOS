@@ -1,10 +1,5 @@
-export type IconName =
-  | "inbox" | "grid" | "calendar" | "tag" | "chart" | "settings" | "edit"
-  | "graduation" | "cart" | "bulb" | "monitor" | "book" | "dumbbell" | "plane"
-  | "checkSquare" | "briefcase" | "folder" | "user" | "heart" | "heartPulse"
-  | "leaf" | "mountain" | "more" | "list" | "plus" | "command" | "sparkle" | "close"
-  | "search" | "filter" | "share" | "users" | "star" | "flag" | "clock" | "chevronDown"
-  | "chevronRight" | "archive" | "trash" | "currency" | "description";
+import type { IconName } from "../schemas";
+export type { IconName } from "../schemas";
 
 export function Icon(props: { name: IconName; size?: number; strokeWidth?: number; class?: string }) {
   const size = () => props.size ?? 24;

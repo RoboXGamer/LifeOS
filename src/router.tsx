@@ -1,23 +1,9 @@
 import { createRootRoute, createRoute, createRouter } from "@tanstack/solid-router";
 import App from "./App";
-import type { ItemPanelMode } from "./types";
-
-export type AppRouteSearch = {
-  item?: string;
-  panel?: ItemPanelMode;
-  area?: string;
-  parent?: string;
-};
-
-const panelModes = new Set<ItemPanelMode>(["view", "edit", "create", "archived"]);
+import { appRouteSearchSchema } from "./schemas";
 
 const rootRoute = createRootRoute({
-  validateSearch: (search: Record<string, unknown>): AppRouteSearch => ({
-    item: typeof search.item === "string" ? search.item : undefined,
-    panel: typeof search.panel === "string" && panelModes.has(search.panel as ItemPanelMode) ? search.panel as ItemPanelMode : undefined,
-    area: typeof search.area === "string" ? search.area : undefined,
-    parent: typeof search.parent === "string" ? search.parent : undefined
-  }),
+  validateSearch: (search: Record<string, unknown>) => appRouteSearchSchema.parse(search),
   component: App,
   notFoundComponent: App
 });

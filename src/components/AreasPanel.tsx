@@ -10,6 +10,8 @@ export function AreasPanel(props: {
   onAddArea: () => void;
   onAssignItem: (itemId: string, areaId: string) => void;
   onOpenArea: (areaId: string) => void;
+  onEditArea: (areaId: string) => void;
+  onArchiveArea: (areaId: string) => void;
 }) {
   return (
     <section class="areas-panel">
@@ -33,7 +35,7 @@ export function AreasPanel(props: {
 
       <div class={["areas-grid", { "list-view": props.viewMode() === "list" }]}>
         <For each={props.areas()} keyed={area => area.id}>
-          {area => <AreaCard area={area()} onAssignItem={props.onAssignItem} onOpen={props.onOpenArea}/>} 
+          {area => <AreaCard area={area()} onAssignItem={props.onAssignItem} onOpen={props.onOpenArea} onEdit={props.onEditArea} onArchive={props.onArchiveArea}/>} 
         </For>
       </div>
     </section>

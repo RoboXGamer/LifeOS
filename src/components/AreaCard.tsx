@@ -2,7 +2,7 @@ import type { Area } from "../types";
 import { Show, createSignal } from "solid-js";
 import { Icon } from "./Icon";
 
-export function AreaCard(props: { area: Area; onAssignItem: (itemId: string, areaId: string) => void; onOpen: (areaId: string) => void }) {
+export function AreaCard(props: { area: Area; onAssignItem: (itemId: string, areaId: string) => void; onOpen: (areaId: string) => void; onEdit: (areaId: string) => void; onArchive: (areaId: string) => void }) {
   const [menuOpen, setMenuOpen] = createSignal(false);
   const clearDragState = (element: HTMLElement) => {
     element.dataset.dragCounter = "0";
@@ -46,7 +46,7 @@ export function AreaCard(props: { area: Area; onAssignItem: (itemId: string, are
         <div><Icon name={props.area.icon === "heartPulse" ? "leaf" : props.area.icon} size={28}/><h2>{props.area.name}</h2></div>
         <div class="card-menu-wrap">
           <button aria-label={`More options for ${props.area.name}`} onClick={event => { event.stopPropagation(); setMenuOpen(value => !value); }}><Icon name="more" size={24}/></button>
-          <Show when={menuOpen()}><div class="card-menu" onClick={event => event.stopPropagation()}><button onClick={() => props.onOpen(props.area.id)}><Icon name="folder" size={15}/> Open Area</button><button onClick={() => { void navigator.clipboard?.writeText(props.area.name); setMenuOpen(false); }}><Icon name="share" size={15}/> Copy name</button></div></Show>
+          <Show when={menuOpen()}><div class="card-menu" onClick={event => event.stopPropagation()}><button onClick={() => props.onOpen(props.area.id)}><Icon name="folder" size={15}/> Open Area</button><button onClick={() => { props.onEdit(props.area.id); setMenuOpen(false); }}><Icon name="edit" size={15}/> Edit Area</button><button class="danger" onClick={() => props.onArchive(props.area.id)}><Icon name="archive" size={15}/> Archive Area</button></div></Show>
         </div>
       </footer>
     </article>

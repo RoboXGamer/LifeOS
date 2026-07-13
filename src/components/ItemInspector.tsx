@@ -13,6 +13,7 @@ export function ItemInspector(props: {
   areas: Area[];
   children: Item[];
   possibleParents: Item[];
+  availableTags: string[];
   initialAreaId: string | null;
   initialParentId: string | null;
   onClose: () => void;
@@ -20,7 +21,6 @@ export function ItemInspector(props: {
   onSave: (value: ItemFormValue) => void;
   onArchive: () => void;
   onRestore: () => void;
-  onDelete: () => void;
   onToggleFavorite: () => void;
   onOpenItem: (id: string) => void;
   onAddChild: () => void;
@@ -78,7 +78,7 @@ export function ItemInspector(props: {
               <div><dt><Icon name="graduation" size={16}/> Area</dt><dd>{area()?.name ?? "Inbox"}</dd></div>
               <Show when={props.item?.type === "Task"}><div><dt><Icon name="list" size={16}/> Status</dt><dd><em class={`badge status-${props.item?.status?.toLowerCase().replace(" ", "-")}`}>{props.item?.status ?? "Todo"}</em></dd></div></Show>
               <Show when={props.item?.priority}><div><dt><Icon name="flag" size={16}/> Priority</dt><dd><em class={`priority-ring priority-${props.item?.priority}`}>P{props.item?.priority}</em></dd></div></Show>
-              <Show when={props.item?.dueDate}><div><dt><Icon name="calendar" size={16}/> Due Date</dt><dd><strong>{props.item?.dueLabel ?? props.item?.dueDate}</strong></dd></div></Show>
+              <Show when={props.item?.dueDate}><div><dt><Icon name="calendar" size={16}/> Due Date</dt><dd><strong>{props.item?.dueDate}</strong></dd></div></Show>
               <Show when={props.item?.amount !== undefined}><div><dt><Icon name="currency" size={16}/> Amount</dt><dd><strong>{new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(props.item!.amount!)}</strong><small>{props.item?.isSettled ? "Settled" : "Unsettled"}</small></dd></div></Show>
             </dl>
             <Show when={props.item?.description}><section class="inspector-section"><h3><Icon name="flag" size={16}/> Description</h3><p>{props.item?.description}</p></section></Show>
@@ -92,8 +92,8 @@ export function ItemInspector(props: {
             <Show when={props.mode !== "archived"}><section class="archive-section"><div><strong>Archive</strong><span>Remove from active views.</span></div><button class="switch" aria-label="Archive item" onClick={props.onArchive}><i/></button></section></Show>
           </div>
           <footer class="inspector-actions">
-            <Show when={props.mode === "archived"} fallback={<><button class="delete-action" onClick={props.onDelete}><Icon name="trash" size={18}/> Delete</button><button class="edit-action" onClick={() => props.onModeChange("edit")}><Icon name="edit" size={18}/> Edit</button></>}>
-              <button class="delete-action" onClick={props.onDelete}><Icon name="trash" size={18}/> Delete</button><button class="edit-action" onClick={props.onRestore}><Icon name="archive" size={18}/> Restore</button>
+            <Show when={props.mode === "archived"} fallback={<button class="edit-action" onClick={() => props.onModeChange("edit")}><Icon name="edit" size={18}/> Edit</button>}>
+              <button class="edit-action" onClick={props.onRestore}><Icon name="archive" size={18}/> Restore</button>
             </Show>
           </footer>
         </>
@@ -109,7 +109,7 @@ export function ItemInspector(props: {
             <label><span>Due date</span><input name="dueDate" type="date" value={props.item?.dueDate ?? ""}/></label>
             <Show when={selectedType() === "Expense" || selectedType() === "Payment"}><label><span>Amount</span><input name="amount" type="number" min="0" step="0.01" value={props.item?.amount?.toString() ?? ""}/></label><label class="check-field"><input name="isSettled" type="checkbox" checked={props.item?.isSettled ?? selectedType() === "Payment"}/><span>Settled</span></label></Show>
             <label><span>Parent item</span><select name="parentId" value={props.item?.parentId ?? props.initialParentId ?? ""}><option value="">None</option><For each={props.possibleParents}>{item => <option value={item.id}>{item.title}</option>}</For></select></label>
-            <label><span>Tags</span><input name="tags" value={(props.item?.tags ?? []).join(", ")} placeholder="urgent, college"/></label>
+            <label><span>Tags</span><input name="tags" list="available-tags" value={(props.item?.tags ?? []).join(", ")} placeholder="urgent, college"/><datalist id="available-tags"><For each={props.availableTags}>{tag => <option value={tag}/>}</For></datalist></label>
             <label><span>Description</span><textarea name="description" rows="5" placeholder="Add useful context...">{props.item?.description ?? ""}</textarea></label>
           </div>
           <footer class="inspector-actions"><button type="button" class="delete-action" onClick={() => props.item ? props.onModeChange(props.item.archived ? "archived" : "view") : props.onClose()}>Cancel</button><button class="edit-action" type="submit">{props.mode === "create" ? "Create Item" : "Save Changes"}</button></footer>

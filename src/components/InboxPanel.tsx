@@ -40,7 +40,7 @@ export function InboxPanel(props: { items: () => Item[]; onQuickCapture: () => v
           <span class="capture-icon"><Icon name="inbox" size={20}/></span>
           <span>Quick Capture</span>
         </button>
-        <span class="shortcut"><Icon name="command" size={15}/> K</span>
+        <span class="shortcut">Ctrl Space</span>
       </footer>
     </aside>
   );

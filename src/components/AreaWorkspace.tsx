@@ -29,25 +29,24 @@ export function AreaWorkspace(props: {
   selectedId: () => string | null;
   onBack: () => void;
   onNewItem: () => void;
+  onEditArea: () => void;
   onSelectItem: (id: string) => void;
   onToggleComplete: (id: string) => void;
+  onCyclePriority: (id: string) => void;
 }) {
   const [search, setSearch] = createSignal("");
   const [typeFilter, setTypeFilter] = createSignal<ItemType | "All">("All");
-  const [statusFilter, setStatusFilter] = createSignal<"All" | "Open" | "Done">("All");
-  const [filtersOpen, setFiltersOpen] = createSignal(false);
   const [expanded, setExpanded] = createSignal<Set<string>>(new Set(["college-project"]));
 
   const activeItems = () => props.items().filter(item => !item.archived);
-  const topLevelItems = () => activeItems().filter(item => !item.parentId);
+  const byPriority = (a: Item, b: Item) => (a.priority ?? 4) - (b.priority ?? 4) || a.createdAt.localeCompare(b.createdAt);
+  const topLevelItems = () => activeItems().filter(item => !item.parentId).sort(byPriority);
   const childItems = (parentId: string) => activeItems().filter(item => item.parentId === parentId);
 
   const matches = (item: Item) => {
     const query = search().trim().toLowerCase();
     if (query && !`${item.title} ${(item.tags ?? []).join(" ")}`.toLowerCase().includes(query)) return false;
     if (typeFilter() !== "All" && item.type !== typeFilter()) return false;
-    if (statusFilter() === "Open" && (item.status === "Done" || item.isSettled === true)) return false;
-    if (statusFilter() === "Done" && item.status !== "Done" && item.isSettled !== true) return false;
     return true;
   };
 
@@ -79,6 +78,7 @@ export function AreaWorkspace(props: {
       <header class="workspace-topbar">
         <button class="breadcrumb" onClick={props.onBack}><span>Areas</span><Icon name="chevronRight" size={14}/><strong>{props.area.name}</strong></button>
         <div class="workspace-actions">
+          <button onClick={props.onEditArea}><Icon name="edit" size={17}/> Edit Area</button>
           <button class="primary-action" onClick={props.onNewItem}><Icon name="plus" size={18}/> New Item</button>
         </div>
       </header>
@@ -107,19 +107,6 @@ export function AreaWorkspace(props: {
             <input value={search()} onInput={event => setSearch(event.currentTarget.value)} placeholder="Search items..."/>
             <Icon name="search" size={18}/>
           </label>
-          <div class="table-actions">
-            <div class="filter-wrap">
-              <button class={{ active: filtersOpen() }} onClick={() => setFiltersOpen(value => !value)}><Icon name="filter" size={17}/> Filters</button>
-              <Show when={filtersOpen()}>
-                <div class="filter-menu">
-                  <strong>Completion</strong>
-                  <For each={["All", "Open", "Done"] as const}>
-                    {status => <button class={{ active: statusFilter() === status }} onClick={() => setStatusFilter(status)}>{status}</button>}
-                  </For>
-                </div>
-              </Show>
-            </div>
-          </div>
         </div>
 
         <div class="type-tabs">
@@ -147,6 +134,7 @@ export function AreaWorkspace(props: {
                       <Show when={row().depth === 1}><i class="child-branch"/></Show>
                       <button
                         class={["row-check", { checked: item().status === "Done" }]}
+                        disabled={item().type !== "Task"}
                         aria-label={`Toggle ${item().title}`}
                         onClick={event => { event.stopPropagation(); props.onToggleComplete(item().id); }}
                       >
@@ -166,8 +154,8 @@ export function AreaWorkspace(props: {
                       <Show when={item().type === "Expense" || item().type === "Payment"}><em class={`badge status-${item().isSettled ? "settled" : "unsettled"}`}>{item().isSettled ? "Settled" : "Unsettled"}</em></Show>
                       <Show when={!item().status && item().type !== "Expense" && item().type !== "Payment"}>—</Show>
                     </span>
-                    <span><Show when={item().priority} fallback="—"><em class={`badge priority-${item().priority}`}>P{item().priority}</em></Show></span>
-                    <span class={{ "date-positive": item().status === "Done" || item().type === "Event", "date-urgent": !!item().dueLabel }}>{item().dueLabel ?? formatDate(item().dueDate)}</span>
+                    <button class="priority-cell" title="Cycle priority" onClick={event => { event.stopPropagation(); props.onCyclePriority(item().id); }}><Show when={item().priority} fallback="—"><em class={`badge priority-${item().priority}`}>P{item().priority}</em></Show></button>
+                    <span class={{ "date-positive": item().status === "Done" || item().type === "Event" }}>{formatDate(item().dueDate)}</span>
                     <span><Show when={item().tags?.[0]} fallback="—"><em class="tag-badge">#{item().tags?.[0]}</em></Show></span>
                     <span class="parent-cell">{row().parentTitle ?? "—"}</span>
                     <span class={{ "money-positive": item().type === "Payment" }}>{formatMoney(item().amount)}</span>
@@ -183,8 +171,6 @@ export function AreaWorkspace(props: {
 
         <footer class="table-footer">
           <span>{rows().filter(row => row.depth === 0).length} items</span>
-          <div><button aria-label="Previous page" disabled><Icon name="chevronRight" class="rotate-180" size={16}/></button><strong>1</strong><button aria-label="Next page" disabled><Icon name="chevronRight" size={16}/></button></div>
-          <label class="page-size">Rows <select aria-label="Rows per page"><option>50</option></select></label>
         </footer>
       </section>
     </section>
