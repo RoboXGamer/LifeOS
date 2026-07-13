@@ -1,5 +1,6 @@
 import { For } from "solid-js";
 import type { Item } from "../types";
+import { itemTypeIcon } from "./AreaWorkspace";
 import { Icon } from "./Icon";
 
 export function InboxPanel(props: { items: () => Item[]; onQuickCapture: () => void; onOpenItem: (id: string) => void }) {
@@ -27,7 +28,7 @@ export function InboxPanel(props: { items: () => Item[]; onQuickCapture: () => v
               }}
               onClick={() => props.onOpenItem(item().id)}
             >
-              <Icon name={item().icon} size={25}/>
+              <Icon name={itemTypeIcon(item().type)} size={25}/>
               <span>{item().title}</span>
               <i aria-hidden="true"/>
             </li>

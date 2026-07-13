@@ -78,9 +78,11 @@ export function InboxWorkspace(props: {
 }
 
 export function TodayWorkspace(props: { items: () => Item[]; areas: () => Area[]; onEdit: (id: string) => void; onToggle: (id: string) => void; onCapture: () => void }) {
+  const [completedOpen, setCompletedOpen] = createSignal(false);
   const today = new Date().toISOString().slice(0, 10);
   const todayTasks = () => props.items().filter(item => !item.archived && item.type === "Task" && item.dueDate === today);
   const dueToday = () => todayTasks().filter(item => item.status !== "Done");
+  const completedToday = () => todayTasks().filter(item => item.status === "Done");
   const areaFor = (id: string | null) => props.areas().find(area => area.id === id);
   const done = () => todayTasks().filter(item => item.status === "Done").length;
   return (
@@ -88,6 +90,12 @@ export function TodayWorkspace(props: { items: () => Item[]; areas: () => Area[]
       <ScreenHeader eyebrow={formatDate(today)} title="Today" description="A focused view of what needs your attention now." actionLabel="Add Item" onAction={props.onCapture}/>
       <div class="focus-progress"><div><strong>{done()} of {todayTasks().length}</strong><span>completed today</span></div><i><b style={{ width: `${todayTasks().length ? done() / todayTasks().length * 100 : 0}%` }}/></i></div>
       <div class="screen-list"><For each={dueToday()} keyed={item => item.id}>{item => <ScreenItemRow item={item()} area={areaFor(item().areaId)} onEdit={() => props.onEdit(item().id)} onToggle={() => props.onToggle(item().id)}/>}</For><Show when={!dueToday().length}><EmptyState icon="checkSquare" title="Nothing due today" copy="Enjoy the space, or capture the next thing on your mind." action="Add an item" onAction={props.onCapture}/></Show></div>
+      <Show when={completedToday().length}>
+        <section class="completed-today">
+          <button class="completed-toggle" aria-expanded={completedOpen() ? "true" : "false"} onClick={() => setCompletedOpen(value => !value)}><span><Icon name="checkSquare" size={17}/> Completed today <em>{completedToday().length}</em></span><Icon name={completedOpen() ? "chevronDown" : "chevronRight"} size={17}/></button>
+          <Show when={completedOpen()}><div class="completed-list"><For each={completedToday()} keyed={item => item.id}>{item => <ScreenItemRow item={item()} area={areaFor(item().areaId)} onEdit={() => props.onEdit(item().id)} onToggle={() => props.onToggle(item().id)} toggleLabel="Mark incomplete"/>}</For></div></Show>
+        </section>
+      </Show>
     </section>
   );
 }
@@ -118,10 +126,10 @@ export function TagsWorkspace(props: { items: () => Item[]; areas: () => Area[];
   return <section class="v1-screen"><ScreenHeader eyebrow="Flexible organization" title="Tags" description="Browse the labels that cut across Areas and item types."/><div class="tag-grid"><For each={tags()}>{tag => <button class={{ active: selectedTag() === tag }} onClick={() => setSelectedTag(current => current === tag ? null : tag)}><span>#{tag}</span><strong>{props.items().filter(item => item.tags?.includes(tag)).length}</strong></button>}</For></div><Show when={selectedTag()} fallback={<EmptyState icon="tag" title="Choose a tag" copy="Select a label above to see everything connected to it."/>}><div class="tag-result-heading"><strong>#{selectedTag()}</strong><span>{taggedItems().length} items</span></div><div class="screen-list"><For each={taggedItems()} keyed={item => item.id}>{item => <ScreenItemRow item={item()} area={areaFor(item().areaId)} onEdit={() => props.onEdit(item().id)} onToggle={() => props.onToggle(item().id)}/>}</For></div></Show></section>;
 }
 
-export function ArchiveWorkspace(props: { items: () => Item[]; areas: () => Area[]; onOpen: (id: string) => void; onRestore: (id: string) => void }) {
+export function ArchiveWorkspace(props: { items: () => Item[]; areas: () => Area[]; onOpen: (id: string) => void; onRestore: (id: string) => void; onDelete: (id: string) => void }) {
   const archived = () => props.items().filter(item => item.archived);
   const areaFor = (id: string | null) => props.areas().find(area => area.id === id);
-  return <section class="v1-screen"><ScreenHeader eyebrow="Out of sight, never lost" title="Archive" description="Finished and inactive items stay available without cluttering active views."/><div class="screen-list"><For each={archived()} keyed={item => item.id}>{item => <ScreenItemRow item={item()} area={areaFor(item().areaId)} onEdit={() => props.onOpen(item().id)} onToggle={() => props.onRestore(item().id)} canToggle toggleLabel="Restore" trailing={<div class="archive-actions"><button onClick={() => props.onRestore(item().id)}><Icon name="archive" size={16}/> Restore</button></div>}/>}</For><Show when={!archived().length}><EmptyState icon="archive" title="Archive is empty" copy="Archived items will be kept safely here."/></Show></div></section>;
+  return <section class="v1-screen"><ScreenHeader eyebrow="Out of sight, never lost" title="Archive" description="Finished and inactive items stay available without cluttering active views."/><div class="screen-list"><For each={archived()} keyed={item => item.id}>{item => <ScreenItemRow item={item()} area={areaFor(item().areaId)} onEdit={() => props.onOpen(item().id)} onToggle={() => props.onRestore(item().id)} canToggle toggleLabel="Restore" trailing={<div class="archive-actions"><button onClick={() => props.onRestore(item().id)}><Icon name="archive" size={16}/> Restore</button><button class="danger" onClick={() => props.onDelete(item().id)}><Icon name="trash" size={16}/> Delete forever</button></div>}/>}</For><Show when={!archived().length}><EmptyState icon="archive" title="Archive is empty" copy="Archived items will be kept safely here."/></Show></div></section>;
 }
 
 export function SettingsWorkspace(props: { workspaceName: string; itemCount: number; areaCount: number; archivedAreas: () => Area[]; saveMessage: string; onRenameWorkspace: (name: string) => void; onRestoreArea: (id: string) => void; onReset: () => void; onArchiveCompleted: () => void }) {

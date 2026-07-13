@@ -50,6 +50,8 @@ export function Icon(props: { name: IconName; size?: number; strokeWidth?: numbe
     archive: <><path d="M4 7h16v14H4Z"/><path d="M2 3h20v4H2ZM9 11h6"/></>,
     trash: <><path d="M3 6h18M8 6V4h8v2M19 6l-1 15H6L5 6M10 11v6M14 11v6"/></>,
     currency: <><path d="M7 7h10M7 11h10M9 4c5 0 6 8 0 8l7 8"/></>,
+    expense: <><circle cx="12" cy="12" r="9"/><path d="M12 7v10m0 0-4-4m4 4 4-4"/></>,
+    payment: <><circle cx="12" cy="12" r="9"/><path d="M12 17V7m0 0-4 4m4-4 4 4"/></>,
     description: <><path d="M4 4h16v16H4Z"/><path d="M8 9h8M8 13h8M8 17h5"/></>,
     more: <><circle cx="12" cy="5" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1" fill="currentColor" stroke="none"/></>,
     list: <><path d="M9 6h12M9 12h12M9 18h12"/><circle cx="4" cy="6" r="1" fill="currentColor" stroke="none"/><circle cx="4" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="4" cy="18" r="1" fill="currentColor" stroke="none"/></>,

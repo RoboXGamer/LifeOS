@@ -8,8 +8,8 @@ const itemTypes: (ItemType | "All")[] = ["All", "Task", "Note", "Event", "Expens
 export const itemTypeIcon = (type?: ItemType): IconName => {
   if (type === "Note") return "book";
   if (type === "Event") return "calendar";
-  if (type === "Expense") return "briefcase";
-  if (type === "Payment") return "clock";
+  if (type === "Expense") return "expense";
+  if (type === "Payment") return "payment";
   return "checkSquare";
 };
 

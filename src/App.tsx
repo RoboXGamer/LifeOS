@@ -4,7 +4,7 @@ import { useNavigate, useRouterState } from "@tanstack/solid-router";
 import "./App.css";
 import { AreasPanel } from "./components/AreasPanel";
 import { AreaDialog, type AreaFormValue } from "./components/AreaDialog";
-import { AreaWorkspace, itemTypeIcon } from "./components/AreaWorkspace";
+import { AreaWorkspace } from "./components/AreaWorkspace";
 import { CaptureDialog } from "./components/CaptureDialog";
 import { InboxPanel } from "./components/InboxPanel";
 import { ItemInspector } from "./components/ItemInspector";
@@ -107,7 +107,7 @@ function App() {
 
   const captureItem = (title: string) => {
     const now = new Date().toISOString();
-    const item = itemSchema.parse({ id: nanoid(), workspaceId: workspace().id, title, areaId: null, icon: "checkSquare", color: "violet", type: "Task", status: "Todo", tags: [], parentId: null, archived: false, favorite: false, createdAt: now, updatedAt: now });
+    const item = itemSchema.parse({ id: nanoid(), workspaceId: workspace().id, title, areaId: null, color: "violet", type: "Task", status: "Todo", tags: [], parentId: null, archived: false, favorite: false, createdAt: now, updatedAt: now });
     setItems(current => [...current, item]);
   };
 
@@ -176,7 +176,7 @@ function App() {
     if (currentEditingId) {
       const edited = items().find(item => item.id === currentEditingId);
       setItems(current => current.map(item => {
-        if (item.id === currentEditingId) return itemSchema.parse({ ...item, ...normalized, icon: itemTypeIcon(parsedForm.type), updatedAt: now });
+        if (item.id === currentEditingId) return itemSchema.parse({ ...item, ...normalized, updatedAt: now });
         if (item.parentId === currentEditingId && edited?.areaId !== parsedForm.areaId) return itemSchema.parse({ ...item, areaId: parsedForm.areaId, updatedAt: now });
         return item;
       }));
@@ -185,7 +185,7 @@ function App() {
       return;
     }
     const colors: Record<ItemFormValue["type"], ItemColor> = { Task: "violet", Note: "amber", Event: "green", Expense: "orange", Payment: "teal" };
-    const newItem = itemSchema.parse({ id: nanoid(), workspaceId: workspace().id, icon: itemTypeIcon(parsedForm.type), color: colors[parsedForm.type], archived: false, favorite: false, createdAt: now, updatedAt: now, ...normalized });
+    const newItem = itemSchema.parse({ id: nanoid(), workspaceId: workspace().id, color: colors[parsedForm.type], archived: false, favorite: false, createdAt: now, updatedAt: now, ...normalized });
     setItems(current => [...current, newItem]);
     setTags(current => [...new Set([...current, ...parsedForm.tags])]);
     updatePanelRoute({ item: newItem.id, panel: "view" }, true);
@@ -195,6 +195,12 @@ function App() {
   const changePanelMode = (mode: ItemPanelMode) => updatePanelRoute({ item: selectedItemId() ?? undefined, panel: mode, area: draftAreaId() ?? undefined, parent: draftParentId() ?? undefined }, true);
   const archiveItem = (id: string) => { setItems(current => current.map(item => item.id === id || item.parentId === id ? itemSchema.parse({ ...item, archived: true, updatedAt: new Date().toISOString() }) : item)); updatePanelRoute({ item: id, panel: "archived" }, true); };
   const restoreItem = (id: string) => { const selected = items().find(item => item.id === id); const familyId = selected?.parentId ?? id; setItems(current => current.map(item => item.id === familyId || item.parentId === familyId ? itemSchema.parse({ ...item, archived: false, updatedAt: new Date().toISOString() }) : item)); updatePanelRoute({ item: id, panel: "view" }, true); };
+  const permanentlyDeleteArchivedItem = (id: string) => {
+    const item = items().find(candidate => candidate.id === id);
+    if (!item?.archived || !window.confirm(`Permanently delete “${item.title}”? This cannot be undone.`)) return;
+    setItems(current => current.filter(candidate => candidate.id !== id && (item.parentId ? true : candidate.parentId !== id)));
+    if (selectedItemId() === id) closePanel();
+  };
   const toggleFavorite = (id: string) => updateItem(id, { favorite: !items().find(item => item.id === id)?.favorite });
   const archiveCompleted = () => { const completed = new Set(items().filter(item => item.type === "Task" && item.status === "Done").map(item => item.id)); setItems(current => current.map(item => completed.has(item.id) || (item.parentId ? completed.has(item.parentId) : false) ? itemSchema.parse({ ...item, archived: true, updatedAt: new Date().toISOString() }) : item)); };
   const renameWorkspace = (name: string) => setWorkspace(current => workspaceSchema.parse({ ...current, name, updatedAt: new Date().toISOString() }));
@@ -214,7 +220,7 @@ function App() {
           <Match when={activeView() === "upcoming"}><UpcomingWorkspace items={items} areas={activeAreas} onEdit={openItem} onToggle={toggleComplete}/></Match>
           <Match when={activeView() === "search"}><SearchWorkspace items={items} areas={activeAreas} onEdit={openItem} onToggle={toggleComplete}/></Match>
           <Match when={activeView() === "tags"}><TagsWorkspace items={items} areas={activeAreas} availableTags={tags} onEdit={openItem} onToggle={toggleComplete}/></Match>
-          <Match when={activeView() === "archive"}><ArchiveWorkspace items={items} areas={areas} onOpen={openItem} onRestore={restoreItem}/></Match>
+          <Match when={activeView() === "archive"}><ArchiveWorkspace items={items} areas={areas} onOpen={openItem} onRestore={restoreItem} onDelete={permanentlyDeleteArchivedItem}/></Match>
           <Match when={activeView() === "settings"}><SettingsWorkspace workspaceName={workspace().name} itemCount={items().length} areaCount={activeAreas().length} archivedAreas={archivedAreas} saveMessage={saveMessage()} onRenameWorkspace={renameWorkspace} onRestoreArea={restoreArea} onReset={resetData} onArchiveCompleted={archiveCompleted}/></Match>
         </Switch>
       }>

@@ -9,7 +9,7 @@ export const AREA_TONES = ["violet", "blue", "green", "amber", "coral", "teal"] 
 export const ICON_NAMES = [
   "inbox", "grid", "calendar", "tag", "chart", "settings", "edit", "graduation", "cart", "bulb", "monitor", "book", "dumbbell", "plane",
   "checkSquare", "briefcase", "folder", "user", "heart", "heartPulse", "leaf", "mountain", "more", "list", "plus", "command", "sparkle", "close",
-  "search", "filter", "share", "users", "star", "flag", "clock", "chevronDown", "chevronRight", "archive", "trash", "currency", "description"
+  "search", "filter", "share", "users", "star", "flag", "clock", "chevronDown", "chevronRight", "archive", "trash", "currency", "expense", "payment", "description"
 ] as const;
 
 const idSchema = z.string().trim().min(1).max(120);
@@ -42,7 +42,6 @@ export const itemSchema = z.object({
   workspaceId: idSchema,
   title: z.string().trim().min(1).max(240),
   areaId: idSchema.nullable(),
-  icon: z.enum(ICON_NAMES),
   color: z.enum(ITEM_COLORS),
   type: z.enum(ITEM_TYPES),
   status: z.enum(ITEM_STATUSES).optional(),
@@ -175,7 +174,6 @@ export function migrateAppState(input: unknown, fallback: AppState): AppState {
       workspaceId: workspace.id,
       areaId: typeof value.areaId === "string" && areaIds.has(value.areaId) ? value.areaId : null,
       parentId: typeof value.parentId === "string" ? value.parentId : null,
-      icon: typeof value.icon === "string" && ICON_NAMES.includes(value.icon as typeof ICON_NAMES[number]) ? value.icon : "checkSquare",
       color: typeof value.color === "string" && ITEM_COLORS.includes(value.color as typeof ITEM_COLORS[number]) ? value.color : "violet",
       archived: value.archived === true || (typeof value.areaId === "string" && archivedAreaIds.has(value.areaId)),
       favorite: value.favorite === true,
