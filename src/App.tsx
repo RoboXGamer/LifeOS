@@ -1,198 +1,130 @@
-import { createSignal, For, createEffect } from "solid-js";
-import "./App.css";
+import { Match, Show, Switch, createEffect, createSignal } from "solid-js";
 import { nanoid } from "nanoid";
-
-type Item = {
-  id: string;
-  text: string;
-  areaId: string | null;
-  createdAt: string;
-  updatedAt: string;
-};
-
-type Area = {
-  id: string;
-  name: string;
-  createdAt: string;
-  updatedAt: string;
-};
+import "./App.css";
+import { AreasPanel } from "./components/AreasPanel";
+import { AreaWorkspace, itemTypeIcon } from "./components/AreaWorkspace";
+import { CaptureDialog } from "./components/CaptureDialog";
+import { InboxPanel } from "./components/InboxPanel";
+import { ItemDialog, type ItemFormValue } from "./components/ItemDialog";
+import { ItemInspector } from "./components/ItemInspector";
+import { NavigationRail } from "./components/NavigationRail";
+import { ArchiveWorkspace, InboxWorkspace, SearchWorkspace, SettingsWorkspace, TagsWorkspace, TodayWorkspace, UpcomingWorkspace } from "./components/V1Screens";
+import { initialAreas, initialItems } from "./data/seed";
+import { clearState, loadState, saveState } from "./data/storage";
+import type { AppView, Area, Item, ItemColor, ItemViewMode, ViewMode } from "./types";
 
 function App() {
-  const [items, setItems] = createSignal<Item[]>([]);
+  const initialState = loadState({ items: initialItems, areas: initialAreas });
+  const [items, setItems] = createSignal<Item[]>(initialState.items);
+  const [areas, setAreas] = createSignal<Area[]>(initialState.areas);
+  const [activeView, setActiveView] = createSignal<AppView>("areas");
+  const [viewMode, setViewMode] = createSignal<ViewMode>("grid");
+  const [itemView, setItemView] = createSignal<ItemViewMode>("list");
+  const [dialog, setDialog] = createSignal<"capture" | "area" | null>(null);
+  const [selectedAreaId, setSelectedAreaId] = createSignal<string | null>(null);
+  const [selectedItemId, setSelectedItemId] = createSignal<string | null>(null);
+  const [itemDialogOpen, setItemDialogOpen] = createSignal(false);
+  const [editingItemId, setEditingItemId] = createSignal<string | null>(null);
 
   createEffect(
-    () => [items()],
-    () => {
-      console.log(items());
-    },
+    () => ({ items: items(), areas: areas() }),
+    state => saveState(state)
   );
 
-  const assignItemToArea = (itemId: string, areaId: string) => {
-    setItems(
-      items().map((item) =>
-        item.id === itemId
-          ? { ...item, areaId, updatedAt: new Date().toISOString() }
-          : item,
-      ),
-    );
+  const inboxItems = () => items().filter(item => item.areaId === null && !item.archived);
+  const selectedArea = () => areas().find(area => area.id === selectedAreaId()) ?? null;
+  const areaItems = () => items().filter(item => item.areaId === selectedAreaId());
+  const selectedItem = () => items().find(item => item.id === selectedItemId()) ?? null;
+  const editingItem = () => items().find(item => item.id === editingItemId()) ?? null;
+
+  const navigate = (view: AppView) => {
+    setSelectedAreaId(null);
+    setSelectedItemId(null);
+    setActiveView(view);
   };
 
+  const captureItem = (title: string) => {
+    const now = new Date().toISOString();
+    setItems(current => [...current, { id: nanoid(), title, areaId: null, icon: "sparkle", color: "violet", parentId: null, archived: false, createdAt: now, updatedAt: now }]);
+  };
+
+  const addArea = (name: string) => {
+    const palettes: Area["tone"][] = ["violet", "blue", "green", "amber", "coral", "teal"];
+    const icons: Area["icon"][] = ["graduation", "briefcase", "folder", "chart", "user", "heart"];
+    const now = new Date().toISOString();
+    const offset = areas().length % palettes.length;
+    setAreas(current => [...current, { id: nanoid(), name, tone: palettes[offset], icon: icons[offset], description: `Items and plans for ${name}.`, createdAt: now, updatedAt: now }]);
+  };
+
+  const updateItem = (id: string, patch: Partial<Item>) => {
+    setItems(current => current.map(item => item.id === id ? { ...item, ...patch, updatedAt: new Date().toISOString() } : item));
+  };
+
+  const assignItemToArea = (itemId: string, areaId: string) => updateItem(itemId, { areaId });
+
+  const openArea = (areaId: string) => {
+    setActiveView("areas");
+    setSelectedAreaId(areaId);
+    const firstItem = items().find(item => item.areaId === areaId && !item.parentId && !item.archived);
+    setSelectedItemId(firstItem?.id ?? null);
+  };
+
+  const closeArea = () => { setSelectedAreaId(null); setSelectedItemId(null); };
+
+  const toggleComplete = (id: string) => {
+    setItems(current => current.map(item => item.id === id && item.type === "Task" ? { ...item, status: item.status === "Done" ? "Todo" : "Done", updatedAt: new Date().toISOString() } : item));
+  };
+
+  const openNewItem = () => { setEditingItemId(null); setItemDialogOpen(true); };
+  const openEditItem = (id = selectedItemId()) => { setEditingItemId(id); setItemDialogOpen(true); };
+
+  const saveItem = (value: ItemFormValue) => {
+    const now = new Date().toISOString();
+    const currentEditingId = editingItemId();
+    if (currentEditingId) {
+      setItems(current => current.map(item => item.id === currentEditingId ? { ...item, ...value, icon: itemTypeIcon(value.type), updatedAt: now } : item));
+      return;
+    }
+    const colors: Record<ItemFormValue["type"], ItemColor> = { Task: "violet", Note: "amber", Event: "green", Expense: "orange", Payment: "teal" };
+    const newItem: Item = { id: nanoid(), areaId: selectedAreaId(), icon: itemTypeIcon(value.type), color: colors[value.type], parentId: null, archived: false, createdAt: now, updatedAt: now, ...value, isSettled: value.type === "Payment" ? true : value.type === "Expense" ? false : undefined };
+    setItems(current => [...current, newItem]);
+    setSelectedItemId(newItem.id);
+  };
+
+  const archiveItem = (id: string) => { updateItem(id, { archived: true }); if (selectedItemId() === id) setSelectedItemId(null); };
+  const restoreItem = (id: string) => updateItem(id, { archived: false });
+  const deleteItem = (id: string) => { setItems(current => current.filter(item => item.id !== id && item.parentId !== id)); if (selectedItemId() === id) setSelectedItemId(null); };
+  const toggleFavorite = (id: string) => updateItem(id, { favorite: !items().find(item => item.id === id)?.favorite });
+  const archiveCompleted = () => setItems(current => current.map(item => item.type === "Task" && item.status === "Done" ? { ...item, archived: true, updatedAt: new Date().toISOString() } : item));
+  const resetData = () => { clearState(); setItems(initialItems); setAreas(initialAreas); setSelectedAreaId(null); setSelectedItemId(null); setActiveView("areas"); };
+
   return (
-    <main class="split">
-      <InboxSection items={items} setItems={setItems} />
-      <AreaSection onAssignItemToArea={assignItemToArea} />
+    <main class={["app-shell", { "detail-shell": !!selectedArea(), "inspector-closed": !!selectedArea() && !selectedItem() }]}>
+      <NavigationRail active={() => selectedArea() ? "areas" : activeView()} onNavigate={navigate}/>
+      <InboxPanel items={inboxItems} onQuickCapture={() => setDialog("capture")}/>
+
+      <Show when={selectedArea()} keyed fallback={
+        <Switch fallback={<AreasPanel areas={areas} viewMode={viewMode} onViewModeChange={setViewMode} onAddArea={() => setDialog("area")} onAssignItem={assignItemToArea} onOpenArea={openArea}/>}>
+          <Match when={activeView() === "inbox"}><InboxWorkspace items={inboxItems} areas={areas} onCapture={() => setDialog("capture")} onUpdate={updateItem} onEdit={openEditItem} onToggle={toggleComplete}/></Match>
+          <Match when={activeView() === "areas"}><AreasPanel areas={areas} viewMode={viewMode} onViewModeChange={setViewMode} onAddArea={() => setDialog("area")} onAssignItem={assignItemToArea} onOpenArea={openArea}/></Match>
+          <Match when={activeView() === "today"}><TodayWorkspace items={items} areas={areas} onEdit={openEditItem} onToggle={toggleComplete} onCapture={() => setDialog("capture")}/></Match>
+          <Match when={activeView() === "upcoming"}><UpcomingWorkspace items={items} areas={areas} onEdit={openEditItem} onToggle={toggleComplete}/></Match>
+          <Match when={activeView() === "search"}><SearchWorkspace items={items} areas={areas} onEdit={openEditItem} onToggle={toggleComplete}/></Match>
+          <Match when={activeView() === "tags"}><TagsWorkspace items={items} areas={areas} onEdit={openEditItem} onToggle={toggleComplete}/></Match>
+          <Match when={activeView() === "archive"}><ArchiveWorkspace items={items} areas={areas} onRestore={restoreItem} onDelete={deleteItem}/></Match>
+          <Match when={activeView() === "settings"}><SettingsWorkspace itemCount={items().length} areaCount={areas().length} onReset={resetData} onArchiveCompleted={archiveCompleted}/></Match>
+        </Switch>
+      }>
+        {area => <AreaWorkspace area={area} items={areaItems} selectedId={selectedItemId} itemView={itemView} onItemViewChange={setItemView} onBack={closeArea} onNewItem={openNewItem} onSelectItem={setSelectedItemId} onToggleComplete={toggleComplete}/>} 
+      </Show>
+
+      <Show when={selectedItem()} keyed>
+        {item => <ItemInspector item={item} area={selectedArea()!} childCount={items().filter(candidate => candidate.parentId === item.id).length} onClose={() => setSelectedItemId(null)} onEdit={() => openEditItem(item.id)} onArchive={() => archiveItem(item.id)} onDelete={() => deleteItem(item.id)} onToggleFavorite={() => toggleFavorite(item.id)} onOpenChildren={() => { const child = items().find(candidate => candidate.parentId === item.id); if (child) setSelectedItemId(child.id); }}/>} 
+      </Show>
+
+      <CaptureDialog mode={dialog} onClose={() => setDialog(null)} onCaptureItem={captureItem} onAddArea={addArea}/>
+      <ItemDialog open={itemDialogOpen} item={editingItem} onClose={() => setItemDialogOpen(false)} onSave={saveItem}/>
     </main>
-  );
-}
-
-function InboxSection(props: {
-  items: () => Item[];
-  setItems: (items: Item[]) => void;
-}) {
-  const onSubmit = (e: Event) => {
-    e.preventDefault();
-    const form = e.currentTarget as HTMLFormElement;
-    const text = new FormData(form).get("item")?.toString() ?? "";
-    if (!text) return;
-    const currentItem = {
-      text,
-      id: nanoid(),
-      areaId: null,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    props.setItems([...props.items(), currentItem]);
-    form.reset();
-  };
-
-  const onDelete = (id: string) => {
-    props.setItems(props.items().filter((t) => t.id !== id));
-  };
-
-  return (
-    <section class="column">
-      <section id="item-form-container">
-        <form onSubmit={onSubmit}>
-          <input
-            autocomplete="off"
-            id="item"
-            name="item"
-            type="text"
-            placeholder="What needs to be done?"
-          />
-          <button type="submit">Add Item</button>
-        </form>
-      </section>
-      <Inbox items={props.items} onDelete={onDelete} />
-    </section>
-  );
-}
-
-function Inbox(props: { items: () => Item[]; onDelete: (id: string) => void }) {
-  const [inboxItems] = createSignal(() =>
-    props.items().filter((item) => item.areaId === null),
-  );
-
-  return (
-    <section id="item-list-container">
-      <ol>
-        <For each={inboxItems()} keyed={(t) => t.id}>
-          {(item, index) => (
-            <li
-              draggable="true"
-              onDragStart={(e) =>
-                e.dataTransfer?.setData("text/plain", item().id)
-              }
-            >
-              <span>
-                {`${index() + 1}. `}
-                {item().text}
-              </span>
-              <button onClick={() => props.onDelete(item().id)}>Delete</button>
-            </li>
-          )}
-        </For>
-      </ol>
-    </section>
-  );
-}
-
-function AreaSection(props: {
-  onAssignItemToArea: (itemId: string, areaId: string) => void;
-}) {
-  const [areas, setAreas] = createSignal<Area[]>([]);
-
-  const onSubmit = (e: Event) => {
-    e.preventDefault();
-    const form = e.currentTarget as HTMLFormElement;
-    const name = new FormData(form).get("area")?.toString() ?? "";
-    if (!name) return;
-    const currentArea = {
-      name,
-      id: nanoid(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    setAreas([...areas(), currentArea]);
-    form.reset();
-  };
-
-  const onDelete = (id: string) => {
-    setAreas(areas().filter((a) => a.id !== id));
-  };
-
-  return (
-    <section class="column">
-      <section id="area-form-container">
-        <form onSubmit={onSubmit}>
-          <input
-            autocomplete="off"
-            id="area"
-            name="area"
-            type="text"
-            placeholder="Area name"
-          />
-          <button type="submit">Add Area</button>
-        </form>
-      </section>
-      <section id="area-list-container">
-        <ol>
-          <For each={areas()} keyed={(a) => a.id}>
-            {(area, index) => (
-              <li
-                onDragOver={(e) => e.preventDefault()}
-                onDragEnter={(e) => {
-                  const li = e.currentTarget;
-                  const c = +(li.dataset.dragCounter ?? 0) + 1;
-                  li.dataset.dragCounter = String(c);
-                  li.classList.add("drag-over");
-                }}
-                onDragLeave={(e) => {
-                  const li = e.currentTarget;
-                  const c = +(li.dataset.dragCounter ?? 0) - 1;
-                  li.dataset.dragCounter = String(c);
-                  if (c <= 0) li.classList.remove("drag-over");
-                }}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  const li = e.currentTarget;
-                  li.dataset.dragCounter = "0";
-                  li.classList.remove("drag-over");
-                  const itemId = e.dataTransfer?.getData("text/plain") ?? "";
-                  if (itemId) props.onAssignItemToArea(itemId, area().id);
-                }}
-              >
-                <span>
-                  {`${index() + 1}. `}
-                  {area().name}
-                </span>
-                <button onClick={() => onDelete(area().id)}>Delete</button>
-              </li>
-            )}
-          </For>
-        </ol>
-      </section>
-    </section>
   );
 }
 
