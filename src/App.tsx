@@ -8,15 +8,16 @@ type Todo = {
 };
 
 function App() {
-  const [todo, setTodo] = createSignal<string>("");
   const [todos, setTodos] = createSignal<Todo[]>([]);
 
   const onSubmit = (e: Event) => {
     e.preventDefault();
-    const currentTodo = { text: todo(), id: nanoid() };
-    console.log(currentTodo);
+    const form = e.currentTarget as HTMLFormElement;
+    const todo = new FormData(form).get("todo")?.toString() ?? "";
+    if (!todo) return;
+    const currentTodo = { text: todo, id: nanoid() };
     setTodos([...todos(), currentTodo]);
-    setTodo("");
+    form.reset();
   };
 
   const onDelete = (id: string) => {
@@ -31,10 +32,9 @@ function App() {
             <input
               autocomplete="off"
               id="todo"
+              name="todo"
               type="text"
-              value={todo()}
               placeholder="What needs to be done?"
-              onInput={(e) => setTodo(e.currentTarget.value)}
             />
             <button type="submit">Add Todo</button>
           </form>
