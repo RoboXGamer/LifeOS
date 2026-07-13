@@ -2,7 +2,7 @@ import { For } from "solid-js";
 import type { Item } from "../types";
 import { Icon } from "./Icon";
 
-export function InboxPanel(props: { items: () => Item[]; onQuickCapture: () => void }) {
+export function InboxPanel(props: { items: () => Item[]; onQuickCapture: () => void; onOpenItem: (id: string) => void }) {
   return (
     <aside class="inbox-panel">
       <header class="inbox-header">
@@ -25,6 +25,7 @@ export function InboxPanel(props: { items: () => Item[]; onQuickCapture: () => v
                 event.dataTransfer?.setData("text/plain", item().id);
                 if (event.dataTransfer) event.dataTransfer.effectAllowed = "move";
               }}
+              onClick={() => props.onOpenItem(item().id)}
             >
               <Icon name={item().icon} size={25}/>
               <span>{item().title}</span>

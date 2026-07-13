@@ -38,9 +38,6 @@
 .breadcrumb:hover span { color: var(--ink); }
 .breadcrumb strong { color: var(--purple); font-weight: 600; }
 .workspace-actions { display: flex; gap: 8px; }
-.area-menu-wrap { position: relative; }
-.area-menu { position: absolute; z-index: 10; top: 44px; right: 0; width: 150px; display: grid; gap: 4px; padding: 8px; border: 1px solid #dfe2ec; border-radius: 10px; background: white; box-shadow: 0 14px 35px rgba(27,34,69,.14); }
-.workspace-actions .area-menu button { height: 32px; justify-content: flex-start; padding-inline: 9px; border: 0; }
 .workspace-actions button,
 .table-actions button {
   display: flex;
@@ -57,7 +54,6 @@
 .workspace-actions button:hover,
 .table-actions button:hover { color: var(--purple); border-color: #d1cbf8; background: #f8f6ff; }
 .workspace-actions .primary-action { color: #4f3cdd; border-color: #d5cff9; background: #f4f1ff; }
-.workspace-actions .square-action { width: 38px; padding: 0; }
 
 .area-summary {
   position: relative;
@@ -97,9 +93,6 @@
 .filter-menu strong { padding: 3px 6px 5px; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
 .filter-menu button { height: 30px; justify-content: flex-start; padding-inline: 9px; border: 0; }
 .filter-menu button.active { color: var(--purple); background: #f1edff; }
-.density-toggle { display: flex; border: 1px solid #dfe3ed; border-radius: 9px; overflow: hidden; }
-.density-toggle button { border: 0; border-radius: 0; }
-.density-toggle button.active { color: var(--purple); background: #f1edff; box-shadow: inset 0 0 0 1px #d8d0fb; }
 
 .type-tabs { flex: 0 0 auto; display: flex; gap: 8px; margin: 10px 0 7px; }
 .type-tabs button { height: 30px; padding: 0 12px; color: #4f5877; border: 1px solid #dfe3ed; border-radius: 7px; background: white; font-size: 12px; }
@@ -116,8 +109,6 @@
 .item-row:hover { background: #fbfaff; }
 .item-row.selected { border: 1px solid #c7baf9; border-radius: 7px; background: linear-gradient(90deg, rgba(118,84,232,.08), rgba(118,84,232,.025)); }
 .item-row.child { min-height: 35px; }
-.items-table.compact .item-row { min-height: 31px; }
-.items-table.compact .item-row.child { min-height: 29px; }
 .title-cell { position: relative; min-width: 0; display: flex; align-items: center; gap: 8px; color: var(--ink); }
 .title-cell strong { overflow: hidden; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
 .title-cell > svg { flex: 0 0 auto; color: var(--purple); }
@@ -180,6 +171,17 @@
 .inspector-actions button { height: 38px; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 8px; font-size: 12px; }
 .delete-action { color: #f12645; padding: 0 15px; }.delete-action:hover { background: #fff0f3; }
 .edit-action { flex: 1; color: var(--purple); border: 1px solid #cfc6fa; background: #f9f7ff; }.edit-action:hover { background: #f0ecff; }
+
+.inspector-form { min-height: 0; flex: 1; display: flex; flex-direction: column; }
+.inspector-form .inspector-scroll { display: grid; align-content: start; gap: 12px; }
+.inspector-form label { display: grid; gap: 5px; color: #66708d; font-size: 11px; }
+.inspector-form input, .inspector-form select, .inspector-form textarea { width: 100%; min-width: 0; padding: 9px 10px; color: var(--ink); border: 1px solid #dce0ea; border-radius: 8px; outline: 0; background: white; resize: vertical; }
+.inspector-form input:focus, .inspector-form select:focus, .inspector-form textarea:focus { border-color: #a99af0; box-shadow: 0 0 0 3px #f0edff; }
+.inspector-form .check-field { display: flex; align-items: center; gap: 8px; }
+.inspector-form .check-field input { width: 17px; height: 17px; }
+.children-block { display: flex !important; }
+.child-item-link { width: 100%; min-height: 34px; display: flex; align-items: center; gap: 8px; padding: 6px 8px; color: #53607d; border-radius: 7px; background: #f7f6fc; font-size: 11px; text-align: left; }
+.child-item-link span { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .item-dialog { width: min(590px, 100%); overflow: hidden; border: 1px solid #ddd9f5; border-radius: 20px; background: white; box-shadow: 0 30px 80px rgba(28,31,63,.22); }
 .item-dialog > header { display: flex; justify-content: space-between; align-items: flex-start; padding: 24px 26px 18px; border-bottom: 1px solid #e7e8ef; }

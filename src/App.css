@@ -20,6 +20,13 @@
 
 .app-shell > * { min-height: 0; }
 
+.app-shell.panel-shell:not(.detail-shell) { grid-template-columns: 74px 292px minmax(0, 1fr) 330px; }
+.panel-shell .nav-rail { padding-inline: 8px; }
+.panel-shell .nav-button { width: 52px; height: 52px; }
+.panel-shell .inbox-header { padding-inline: 20px 16px; }
+.panel-shell .inbox-item { padding-inline: 15px 13px; }
+.panel-shell .quick-capture-bar { padding-inline: 18px; }
+
 button { border: 0; background: none; cursor: pointer; }
 
 .nav-rail {
@@ -137,6 +144,10 @@ button { border: 0; background: none; cursor: pointer; }
   .nav-rail { padding-inline: 9px; }.nav-button { width: 60px; height: 60px; }
   .areas-panel { padding-inline: 26px; }
   .areas-header { flex-direction: column; }.areas-actions { width: 100%; justify-content: space-between; }
+}
+
+@media (max-width: 1050px) {
+  .app-shell.panel-shell:not(.detail-shell) { grid-template-columns: 72px 290px minmax(0, 1fr); }
 }
 
 @media (max-width: 1060px) {

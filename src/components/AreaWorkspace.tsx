@@ -1,5 +1,5 @@
 import { For, Show, createSignal } from "solid-js";
-import type { Area, Item, ItemType, ItemViewMode } from "../types";
+import type { Area, Item, ItemType } from "../types";
 import { Icon, type IconName } from "./Icon";
 import "./AreaDetail.css";
 
@@ -27,8 +27,6 @@ export function AreaWorkspace(props: {
   area: Area;
   items: () => Item[];
   selectedId: () => string | null;
-  itemView: () => ItemViewMode;
-  onItemViewChange: (mode: ItemViewMode) => void;
   onBack: () => void;
   onNewItem: () => void;
   onSelectItem: (id: string) => void;
@@ -38,8 +36,6 @@ export function AreaWorkspace(props: {
   const [typeFilter, setTypeFilter] = createSignal<ItemType | "All">("All");
   const [statusFilter, setStatusFilter] = createSignal<"All" | "Open" | "Done">("All");
   const [filtersOpen, setFiltersOpen] = createSignal(false);
-  const [areaMenuOpen, setAreaMenuOpen] = createSignal(false);
-  const [shareNotice, setShareNotice] = createSignal(false);
   const [expanded, setExpanded] = createSignal<Set<string>>(new Set(["college-project"]));
 
   const activeItems = () => props.items().filter(item => !item.archived);
@@ -78,21 +74,12 @@ export function AreaWorkspace(props: {
 
   const count = (type?: ItemType) => topLevelItems().filter(item => !type || item.type === type).length;
   const financeCount = () => count("Expense") + count("Payment");
-  const copyAreaSummary = async () => {
-    const summary = `${props.area.name}: ${count()} items, ${count("Task")} tasks, ${count("Note")} notes, ${financeCount()} finance items.`;
-    try { await navigator.clipboard.writeText(summary); } catch { /* Clipboard may be unavailable in a local preview. */ }
-    setShareNotice(true);
-    setAreaMenuOpen(false);
-  };
-
   return (
     <section class={`area-workspace tone-${props.area.tone}`}>
       <header class="workspace-topbar">
         <button class="breadcrumb" onClick={props.onBack}><span>Areas</span><Icon name="chevronRight" size={14}/><strong>{props.area.name}</strong></button>
         <div class="workspace-actions">
           <button class="primary-action" onClick={props.onNewItem}><Icon name="plus" size={18}/> New Item</button>
-          <button onClick={copyAreaSummary}><Icon name="share" size={18}/> {shareNotice() ? "Copied" : "Share"}</button>
-          <div class="area-menu-wrap"><button class="square-action" aria-label="More Area options" onClick={() => setAreaMenuOpen(value => !value)}><Icon name="more" size={20}/></button><Show when={areaMenuOpen()}><div class="area-menu"><button onClick={copyAreaSummary}><Icon name="share" size={16}/> Copy summary</button><button onClick={props.onBack}><Icon name="grid" size={16}/> All Areas</button></div></Show></div>
         </div>
       </header>
 
@@ -132,10 +119,6 @@ export function AreaWorkspace(props: {
                 </div>
               </Show>
             </div>
-            <div class="density-toggle" aria-label="Item view">
-              <button class={{ active: props.itemView() === "list" }} onClick={() => props.onItemViewChange("list")}><Icon name="list" size={17}/> List</button>
-              <button class={{ active: props.itemView() === "compact" }} onClick={() => props.onItemViewChange("compact")}><Icon name="grid" size={17}/> Compact</button>
-            </div>
           </div>
         </div>
 
@@ -145,7 +128,7 @@ export function AreaWorkspace(props: {
           </For>
         </div>
 
-        <div class={["items-table", { compact: props.itemView() === "compact" }]}>
+        <div class="items-table">
           <div class="table-head">
             <span>Title</span><span>Type</span><span>Status</span><span>Priority</span><span>Due Date</span><span>Tags</span><span>Parent</span><span/>
           </div>

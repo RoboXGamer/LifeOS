@@ -7,6 +7,21 @@ export type ItemViewMode = "list" | "compact";
 export type ItemType = "Task" | "Note" | "Event" | "Expense" | "Payment";
 export type ItemStatus = "Todo" | "In Progress" | "Done";
 export type AppView = "inbox" | "areas" | "today" | "upcoming" | "search" | "tags" | "archive" | "settings";
+export type ItemPanelMode = "view" | "edit" | "create" | "archived";
+
+export type ItemFormValue = {
+  title: string;
+  type: ItemType;
+  areaId: string | null;
+  status?: ItemStatus;
+  priority?: 1 | 2 | 3;
+  dueDate?: string;
+  amount?: number;
+  isSettled?: boolean;
+  description?: string;
+  tags: string[];
+  parentId?: string | null;
+};
 
 export type Item = {
   id: string;

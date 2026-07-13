@@ -47,7 +47,6 @@ export function InboxWorkspace(props: {
   items: () => Item[];
   areas: () => Area[];
   onCapture: () => void;
-  onUpdate: (id: string, patch: Partial<Item>) => void;
   onEdit: (id: string) => void;
   onToggle: (id: string) => void;
 }) {
@@ -65,14 +64,10 @@ export function InboxWorkspace(props: {
           {item => (
             <article class="triage-row">
               <div><span class={`screen-item-icon item-${item().color}`}><Icon name={itemTypeIcon(item().type)} size={19}/></span><button onClick={() => props.onEdit(item().id)}><strong>{item().title}</strong><small>{(item().tags ?? []).map(tag => `#${tag}`).join("  ") || "Captured item"}</small></button></div>
-              <select aria-label={`Type for ${item().title}`} value={item().type ?? "Task"} onChange={event => props.onUpdate(item().id, { type: event.currentTarget.value as ItemType, icon: itemTypeIcon(event.currentTarget.value as ItemType) })}>
-                <For each={["Task", "Note", "Event", "Expense", "Payment"]}>{type => <option value={type}>{type}</option>}</For>
-              </select>
-              <select aria-label={`Area for ${item().title}`} value="" onChange={event => props.onUpdate(item().id, { areaId: event.currentTarget.value || null })}>
-                <option value="">Choose Area</option><For each={props.areas()}>{area => <option value={area.id}>{area.name}</option>}</For>
-              </select>
-              <input aria-label={`Due date for ${item().title}`} type="date" value={item().dueDate ?? ""} onInput={event => props.onUpdate(item().id, { dueDate: event.currentTarget.value || undefined })}/>
-              <button aria-label={`Edit ${item().title}`} onClick={() => props.onEdit(item().id)}><Icon name="edit" size={17}/></button>
+              <span class={`badge type-${(item().type ?? "Task").toLowerCase()}`}>{item().type ?? "Unsorted"}</span>
+              <span class="inbox-destination">Inbox</span>
+              <span>{formatDate(item().dueDate)}</span>
+              <button class="organize-item" aria-label={`Organize ${item().title}`} onClick={() => props.onEdit(item().id)}><Icon name="edit" size={17}/> Organize</button>
             </article>
           )}
         </For>
@@ -122,10 +117,10 @@ export function TagsWorkspace(props: { items: () => Item[]; areas: () => Area[];
   return <section class="v1-screen"><ScreenHeader eyebrow="Flexible organization" title="Tags" description="Browse the labels that cut across Areas and item types."/><div class="tag-grid"><For each={tags()}>{tag => <button class={{ active: selectedTag() === tag }} onClick={() => setSelectedTag(current => current === tag ? null : tag)}><span>#{tag}</span><strong>{props.items().filter(item => item.tags?.includes(tag)).length}</strong></button>}</For></div><Show when={selectedTag()} fallback={<EmptyState icon="tag" title="Choose a tag" copy="Select a label above to see everything connected to it."/>}><div class="tag-result-heading"><strong>#{selectedTag()}</strong><span>{taggedItems().length} items</span></div><div class="screen-list"><For each={taggedItems()} keyed={item => item.id}>{item => <ScreenItemRow item={item()} area={areaFor(item().areaId)} onEdit={() => props.onEdit(item().id)} onToggle={() => props.onToggle(item().id)}/>}</For></div></Show></section>;
 }
 
-export function ArchiveWorkspace(props: { items: () => Item[]; areas: () => Area[]; onRestore: (id: string) => void; onDelete: (id: string) => void }) {
+export function ArchiveWorkspace(props: { items: () => Item[]; areas: () => Area[]; onOpen: (id: string) => void; onRestore: (id: string) => void; onDelete: (id: string) => void }) {
   const archived = () => props.items().filter(item => item.archived);
   const areaFor = (id: string | null) => props.areas().find(area => area.id === id);
-  return <section class="v1-screen"><ScreenHeader eyebrow="Out of sight, never lost" title="Archive" description="Finished and inactive items stay available without cluttering active views."/><div class="screen-list"><For each={archived()} keyed={item => item.id}>{item => <ScreenItemRow item={item()} area={areaFor(item().areaId)} onEdit={() => props.onRestore(item().id)} onToggle={() => props.onRestore(item().id)} canToggle toggleLabel="Restore" trailing={<div class="archive-actions"><button onClick={() => props.onRestore(item().id)}><Icon name="archive" size={16}/> Restore</button><button class="danger" onClick={() => props.onDelete(item().id)}><Icon name="trash" size={16}/> Delete</button></div>}/>}</For><Show when={!archived().length}><EmptyState icon="archive" title="Archive is empty" copy="Archived items will be kept safely here."/></Show></div></section>;
+  return <section class="v1-screen"><ScreenHeader eyebrow="Out of sight, never lost" title="Archive" description="Finished and inactive items stay available without cluttering active views."/><div class="screen-list"><For each={archived()} keyed={item => item.id}>{item => <ScreenItemRow item={item()} area={areaFor(item().areaId)} onEdit={() => props.onOpen(item().id)} onToggle={() => props.onRestore(item().id)} canToggle toggleLabel="Restore" trailing={<div class="archive-actions"><button onClick={() => props.onRestore(item().id)}><Icon name="archive" size={16}/> Restore</button><button class="danger" onClick={() => props.onDelete(item().id)}><Icon name="trash" size={16}/> Delete</button></div>}/>}</For><Show when={!archived().length}><EmptyState icon="archive" title="Archive is empty" copy="Archived items will be kept safely here."/></Show></div></section>;
 }
 
 export function SettingsWorkspace(props: { itemCount: number; areaCount: number; onReset: () => void; onArchiveCompleted: () => void }) {
