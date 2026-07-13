@@ -17,14 +17,14 @@ import { areaSchema, itemFormSchema, itemSchema, normalizeItemFields, workspaceS
 import type { AppRouteSearch, AppState, AppView, Area, Item, ItemColor, ItemFormValue, ItemPanelMode, ViewMode } from "./types";
 
 const viewPaths = {
-  inbox: "/inbox",
-  areas: "/areas",
-  today: "/today",
-  upcoming: "/upcoming",
-  search: "/search",
-  tags: "/tags",
-  archive: "/archive",
-  settings: "/settings"
+  inbox: "/dashboard/inbox",
+  areas: "/dashboard/areas",
+  today: "/dashboard/today",
+  upcoming: "/dashboard/upcoming",
+  search: "/dashboard/search",
+  tags: "/dashboard/tags",
+  archive: "/dashboard/archive",
+  settings: "/dashboard/settings"
 } as const;
 
 function App() {
@@ -45,10 +45,10 @@ function App() {
   const routeNavigate = useNavigate();
 
   const routeSearch = () => routeLocation().search as AppRouteSearch;
-  const selectedAreaId = () => /^\/areas\/([^/]+)(?:\/calendar)?$/.exec(routeLocation().pathname)?.[1] ?? null;
+  const selectedAreaId = () => /^\/dashboard\/areas\/([^/]+)(?:\/calendar)?$/.exec(routeLocation().pathname)?.[1] ?? null;
   const areaCalendarOpen = () => routeLocation().pathname.endsWith("/calendar");
   const activeView = (): AppView => {
-    const segment = routeLocation().pathname.split("/").filter(Boolean)[0];
+    const segment = routeLocation().pathname.split("/").filter(Boolean)[1];
     return segment && segment in viewPaths ? segment as AppView : "areas";
   };
   const selectedItemId = () => routeSearch().item ?? null;
@@ -102,8 +102,8 @@ function App() {
   const updatePanelRoute = (search: AppRouteSearch, replace = false) => {
     const areaId = selectedAreaId();
     if (areaId) {
-      if (areaCalendarOpen()) void routeNavigate({ to: "/areas/$areaId/calendar", params: { areaId }, search, replace });
-      else void routeNavigate({ to: "/areas/$areaId", params: { areaId }, search, replace });
+      if (areaCalendarOpen()) void routeNavigate({ to: "/dashboard/areas/$areaId/calendar", params: { areaId }, search, replace });
+      else void routeNavigate({ to: "/dashboard/areas/$areaId", params: { areaId }, search, replace });
       return;
     }
     void routeNavigate({ to: viewPaths[activeView()], search, replace });
@@ -147,15 +147,15 @@ function App() {
   const openArea = (areaId: string) => {
     const firstItem = items().find(item => item.areaId === areaId && !item.parentId && !item.archived);
     void routeNavigate({
-      to: "/areas/$areaId",
+      to: "/dashboard/areas/$areaId",
       params: { areaId },
       search: firstItem ? { item: firstItem.id, panel: "view" } : {}
     });
   };
 
-  const closeArea = () => { void routeNavigate({ to: "/areas", search: {} }); };
-  const openAreaCalendar = (areaId: string) => { void routeNavigate({ to: "/areas/$areaId/calendar", params: { areaId }, search: {} }); };
-  const openAreaList = (areaId: string) => { void routeNavigate({ to: "/areas/$areaId", params: { areaId }, search: {} }); };
+  const closeArea = () => { void routeNavigate({ to: "/dashboard/areas", search: {} }); };
+  const openAreaCalendar = (areaId: string) => { void routeNavigate({ to: "/dashboard/areas/$areaId/calendar", params: { areaId }, search: {} }); };
+  const openAreaList = (areaId: string) => { void routeNavigate({ to: "/dashboard/areas/$areaId", params: { areaId }, search: {} }); };
 
   const toggleComplete = (id: string) => {
     setItems(current => current.map(item => item.id === id && item.type === "Task" ? itemSchema.parse({ ...item, status: item.status === "Done" ? "Todo" : "Done", updatedAt: new Date().toISOString() }) : item));
@@ -210,7 +210,7 @@ function App() {
   const toggleFavorite = (id: string) => updateItem(id, { favorite: !items().find(item => item.id === id)?.favorite });
   const archiveCompleted = () => { const completed = new Set(items().filter(item => item.type === "Task" && item.status === "Done").map(item => item.id)); setItems(current => current.map(item => completed.has(item.id) || (item.parentId ? completed.has(item.parentId) : false) ? itemSchema.parse({ ...item, archived: true, updatedAt: new Date().toISOString() }) : item)); };
   const renameWorkspace = (name: string) => setWorkspace(current => workspaceSchema.parse({ ...current, name, updatedAt: new Date().toISOString() }));
-  const resetData = () => { clearState(); setWorkspace(initialWorkspace); setItems(initialItems); setAreas(initialAreas); setTags(initialTags); void routeNavigate({ to: "/areas", search: {} }); };
+  const resetData = () => { clearState(); setWorkspace(initialWorkspace); setItems(initialItems); setAreas(initialAreas); setTags(initialTags); void routeNavigate({ to: "/dashboard/areas", search: {} }); };
 
   return (
     <main class={["app-shell", { "detail-shell": !!selectedArea(), "panel-shell": !!panelMode(), "inspector-closed": !!selectedArea() && !panelMode(), "inbox-collapsed": inboxCollapsed() }]}> 

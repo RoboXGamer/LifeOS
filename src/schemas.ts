@@ -85,6 +85,14 @@ export const appRouteSearchSchema = z.object({
   date: z.iso.date().optional()
 });
 
+export const waitlistEntrySchema = z.object({
+  name: z.string().trim().min(2, "Please enter your name.").max(80),
+  email: z.string().trim().toLowerCase().email("Please enter a valid email address."),
+  createdAt: timestampSchema
+});
+
+export const waitlistSchema = z.array(waitlistEntrySchema).max(10000);
+
 export const appStateSchema = z.object({
   version: z.literal(2),
   workspace: workspaceSchema,
@@ -119,6 +127,7 @@ export type Item = z.infer<typeof itemSchema>;
 export type ItemFormValue = z.infer<typeof itemFormSchema>;
 export type AppState = z.infer<typeof appStateSchema>;
 export type AppRouteSearch = z.infer<typeof appRouteSearchSchema>;
+export type WaitlistEntry = z.infer<typeof waitlistEntrySchema>;
 export type IconName = typeof ICON_NAMES[number];
 export type ItemType = typeof ITEM_TYPES[number];
 export type ItemStatus = typeof ITEM_STATUSES[number];
