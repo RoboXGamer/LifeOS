@@ -4,6 +4,7 @@ import { useNavigate, useRouterState } from "@tanstack/solid-router";
 import "./App.css";
 import { AreasPanel } from "./components/AreasPanel";
 import { AreaDialog, type AreaFormValue } from "./components/AreaDialog";
+import { AreaCalendar } from "./components/AreaCalendar";
 import { AreaWorkspace } from "./components/AreaWorkspace";
 import { CaptureDialog } from "./components/CaptureDialog";
 import { InboxPanel } from "./components/InboxPanel";
@@ -44,7 +45,8 @@ function App() {
   const routeNavigate = useNavigate();
 
   const routeSearch = () => routeLocation().search as AppRouteSearch;
-  const selectedAreaId = () => /^\/areas\/([^/]+)$/.exec(routeLocation().pathname)?.[1] ?? null;
+  const selectedAreaId = () => /^\/areas\/([^/]+)(?:\/calendar)?$/.exec(routeLocation().pathname)?.[1] ?? null;
+  const areaCalendarOpen = () => routeLocation().pathname.endsWith("/calendar");
   const activeView = (): AppView => {
     const segment = routeLocation().pathname.split("/").filter(Boolean)[0];
     return segment && segment in viewPaths ? segment as AppView : "areas";
@@ -53,6 +55,7 @@ function App() {
   const panelMode = () => routeSearch().panel ?? null;
   const draftAreaId = () => routeSearch().area ?? null;
   const draftParentId = () => routeSearch().parent ?? null;
+  const draftDueDate = () => routeSearch().date;
 
   createEffect(
     () => ({ version: 2 as const, workspace: workspace(), items: items(), areas: areas(), tags: tags() }),
@@ -99,7 +102,8 @@ function App() {
   const updatePanelRoute = (search: AppRouteSearch, replace = false) => {
     const areaId = selectedAreaId();
     if (areaId) {
-      void routeNavigate({ to: "/areas/$areaId", params: { areaId }, search, replace });
+      if (areaCalendarOpen()) void routeNavigate({ to: "/areas/$areaId/calendar", params: { areaId }, search, replace });
+      else void routeNavigate({ to: "/areas/$areaId", params: { areaId }, search, replace });
       return;
     }
     void routeNavigate({ to: viewPaths[activeView()], search, replace });
@@ -150,6 +154,8 @@ function App() {
   };
 
   const closeArea = () => { void routeNavigate({ to: "/areas", search: {} }); };
+  const openAreaCalendar = (areaId: string) => { void routeNavigate({ to: "/areas/$areaId/calendar", params: { areaId }, search: {} }); };
+  const openAreaList = (areaId: string) => { void routeNavigate({ to: "/areas/$areaId", params: { areaId }, search: {} }); };
 
   const toggleComplete = (id: string) => {
     setItems(current => current.map(item => item.id === id && item.type === "Task" ? itemSchema.parse({ ...item, status: item.status === "Done" ? "Todo" : "Done", updatedAt: new Date().toISOString() }) : item));
@@ -163,8 +169,8 @@ function App() {
     if (isMobile()) setInboxCollapsed(true);
     updatePanelRoute({ item: id, panel: item.archived ? "archived" : requestedMode });
   };
-  const openNewItem = (areaId: string | null = selectedAreaId(), parentId: string | null = null) => {
-    updatePanelRoute({ panel: "create", area: areaId ?? undefined, parent: parentId ?? undefined });
+  const openNewItem = (areaId: string | null = selectedAreaId(), parentId: string | null = null, dueDate?: string) => {
+    updatePanelRoute({ panel: "create", area: areaId ?? undefined, parent: parentId ?? undefined, date: dueDate });
   };
 
   const saveItem = (value: ItemFormValue) => {
@@ -192,7 +198,7 @@ function App() {
   };
 
   const closePanel = () => updatePanelRoute({});
-  const changePanelMode = (mode: ItemPanelMode) => updatePanelRoute({ item: selectedItemId() ?? undefined, panel: mode, area: draftAreaId() ?? undefined, parent: draftParentId() ?? undefined }, true);
+  const changePanelMode = (mode: ItemPanelMode) => updatePanelRoute({ item: selectedItemId() ?? undefined, panel: mode, area: draftAreaId() ?? undefined, parent: draftParentId() ?? undefined, date: draftDueDate() }, true);
   const archiveItem = (id: string) => { setItems(current => current.map(item => item.id === id || item.parentId === id ? itemSchema.parse({ ...item, archived: true, updatedAt: new Date().toISOString() }) : item)); updatePanelRoute({ item: id, panel: "archived" }, true); };
   const restoreItem = (id: string) => { const selected = items().find(item => item.id === id); const familyId = selected?.parentId ?? id; setItems(current => current.map(item => item.id === familyId || item.parentId === familyId ? itemSchema.parse({ ...item, archived: false, updatedAt: new Date().toISOString() }) : item)); updatePanelRoute({ item: id, panel: "view" }, true); };
   const permanentlyDeleteArchivedItem = (id: string) => {
@@ -224,11 +230,11 @@ function App() {
           <Match when={activeView() === "settings"}><SettingsWorkspace workspaceName={workspace().name} itemCount={items().length} areaCount={activeAreas().length} archivedAreas={archivedAreas} saveMessage={saveMessage()} onRenameWorkspace={renameWorkspace} onRestoreArea={restoreArea} onReset={resetData} onArchiveCompleted={archiveCompleted}/></Match>
         </Switch>
       }>
-        {area => <AreaWorkspace area={area} items={areaItems} selectedId={selectedItemId} onBack={closeArea} onNewItem={() => openNewItem(area.id)} onEditArea={() => setAreaEditorId(area.id)} onSelectItem={openItem} onToggleComplete={toggleComplete} onCyclePriority={cyclePriority}/>} 
+        {area => <Show when={areaCalendarOpen()} fallback={<AreaWorkspace area={area} items={areaItems} selectedId={selectedItemId} onBack={closeArea} onNewItem={() => openNewItem(area.id)} onEditArea={() => setAreaEditorId(area.id)} onCalendarView={() => openAreaCalendar(area.id)} onSelectItem={openItem} onToggleComplete={toggleComplete} onCyclePriority={cyclePriority}/>}> <AreaCalendar area={area} items={areaItems} onBack={closeArea} onListView={() => openAreaList(area.id)} onNewItem={date => openNewItem(area.id, null, date)} onSelectItem={openItem} onToggleComplete={toggleComplete}/></Show>} 
       </Show>
 
       <Show when={panelMode()} keyed>
-        {mode => <ItemInspector mode={mode} item={selectedItem()} areas={activeAreas()} children={selectedChildren()} possibleParents={possibleParents()} availableTags={tags()} initialAreaId={draftAreaId()} initialParentId={draftParentId()} onClose={closePanel} onModeChange={changePanelMode} onSave={saveItem} onArchive={() => selectedItemId() && archiveItem(selectedItemId()!)} onRestore={() => selectedItemId() && restoreItem(selectedItemId()!)} onToggleFavorite={() => selectedItemId() && toggleFavorite(selectedItemId()!)} onOpenItem={openItem} onAddChild={() => openNewItem(selectedItem()?.areaId ?? null, selectedItemId())}/>} 
+        {mode => <ItemInspector mode={mode} item={selectedItem()} areas={activeAreas()} children={selectedChildren()} possibleParents={possibleParents()} availableTags={tags()} initialAreaId={draftAreaId()} initialParentId={draftParentId()} initialDueDate={draftDueDate()} onClose={closePanel} onModeChange={changePanelMode} onSave={saveItem} onArchive={() => selectedItemId() && archiveItem(selectedItemId()!)} onRestore={() => selectedItemId() && restoreItem(selectedItemId()!)} onToggleFavorite={() => selectedItemId() && toggleFavorite(selectedItemId()!)} onOpenItem={openItem} onAddChild={() => openNewItem(selectedItem()?.areaId ?? null, selectedItemId())}/>} 
       </Show>
 
       <CaptureDialog mode={dialog} onClose={() => setDialog(null)} onCaptureItem={captureItem}/>

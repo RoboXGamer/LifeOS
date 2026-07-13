@@ -12,6 +12,7 @@ const indexRoute = createRoute({ getParentRoute: () => rootRoute, path: "/" });
 const inboxRoute = createRoute({ getParentRoute: () => rootRoute, path: "inbox" });
 const areasRoute = createRoute({ getParentRoute: () => rootRoute, path: "areas" });
 const areaRoute = createRoute({ getParentRoute: () => rootRoute, path: "areas/$areaId" });
+const areaCalendarRoute = createRoute({ getParentRoute: () => rootRoute, path: "areas/$areaId/calendar" });
 const todayRoute = createRoute({ getParentRoute: () => rootRoute, path: "today" });
 const upcomingRoute = createRoute({ getParentRoute: () => rootRoute, path: "upcoming" });
 const searchRoute = createRoute({ getParentRoute: () => rootRoute, path: "search" });
@@ -24,6 +25,7 @@ const routeTree = rootRoute.addChildren([
   inboxRoute,
   areasRoute,
   areaRoute,
+  areaCalendarRoute,
   todayRoute,
   upcomingRoute,
   searchRoute,

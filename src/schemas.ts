@@ -81,7 +81,8 @@ export const appRouteSearchSchema = z.object({
   item: z.string().optional(),
   panel: z.enum(ITEM_PANEL_MODES).optional(),
   area: z.string().optional(),
-  parent: z.string().optional()
+  parent: z.string().optional(),
+  date: z.iso.date().optional()
 });
 
 export const appStateSchema = z.object({

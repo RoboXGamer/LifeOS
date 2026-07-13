@@ -16,6 +16,7 @@ export function ItemInspector(props: {
   availableTags: string[];
   initialAreaId: string | null;
   initialParentId: string | null;
+  initialDueDate?: string;
   onClose: () => void;
   onModeChange: (mode: ItemPanelMode) => void;
   onSave: (value: ItemFormValue) => void;
@@ -106,7 +107,7 @@ export function ItemInspector(props: {
             <label><span>Area</span><select name="areaId" value={props.item?.areaId ?? props.initialAreaId ?? ""}><option value="">Inbox</option><For each={props.areas}>{area => <option value={area.id}>{area.name}</option>}</For></select></label>
             <Show when={selectedType() === "Task"}><label><span>Status</span><select name="status" value={props.item?.status ?? "Todo"}><option>Todo</option><option>In Progress</option><option>Done</option></select></label></Show>
             <label><span>Priority</span><select name="priority" value={props.item?.priority?.toString() ?? ""}><option value="">None</option><option value="1">P1 · High</option><option value="2">P2 · Medium</option><option value="3">P3 · Low</option></select></label>
-            <label><span>Due date</span><input name="dueDate" type="date" value={props.item?.dueDate ?? ""}/></label>
+            <label><span>Due date</span><input name="dueDate" type="date" value={props.item?.dueDate ?? props.initialDueDate ?? ""}/></label>
             <Show when={selectedType() === "Expense" || selectedType() === "Payment"}><label><span>Amount</span><input name="amount" type="number" min="0" step="0.01" value={props.item?.amount?.toString() ?? ""}/></label><label class="check-field"><input name="isSettled" type="checkbox" checked={props.item?.isSettled ?? selectedType() === "Payment"}/><span>Settled</span></label></Show>
             <label><span>Parent item</span><select name="parentId" value={props.item?.parentId ?? props.initialParentId ?? ""}><option value="">None</option><For each={props.possibleParents}>{item => <option value={item.id}>{item.title}</option>}</For></select></label>
             <label><span>Tags</span><input name="tags" list="available-tags" value={(props.item?.tags ?? []).join(", ")} placeholder="urgent, college"/><datalist id="available-tags"><For each={props.availableTags}>{tag => <option value={tag}/>}</For></datalist></label>

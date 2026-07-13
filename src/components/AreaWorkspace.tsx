@@ -30,6 +30,7 @@ export function AreaWorkspace(props: {
   onBack: () => void;
   onNewItem: () => void;
   onEditArea: () => void;
+  onCalendarView: () => void;
   onSelectItem: (id: string) => void;
   onToggleComplete: (id: string) => void;
   onCyclePriority: (id: string) => void;
@@ -79,6 +80,7 @@ export function AreaWorkspace(props: {
         <button class="breadcrumb" onClick={props.onBack}><span>Areas</span><Icon name="chevronRight" size={14}/><strong>{props.area.name}</strong></button>
         <div class="workspace-actions">
           <button onClick={props.onEditArea}><Icon name="edit" size={17}/> Edit Area</button>
+          <button onClick={props.onCalendarView}><Icon name="calendar" size={17}/> Calendar</button>
           <button class="primary-action" onClick={props.onNewItem}><Icon name="plus" size={18}/> New Item</button>
         </div>
       </header>
