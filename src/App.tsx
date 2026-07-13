@@ -1,5 +1,6 @@
 import { Match, Show, Switch, createEffect, createSignal } from "solid-js";
 import { nanoid } from "nanoid";
+import { useNavigate, useRouterState } from "@tanstack/solid-router";
 import "./App.css";
 import { AreasPanel } from "./components/AreasPanel";
 import { AreaWorkspace, itemTypeIcon } from "./components/AreaWorkspace";
@@ -11,19 +12,38 @@ import { ArchiveWorkspace, InboxWorkspace, SearchWorkspace, SettingsWorkspace, T
 import { initialAreas, initialItems } from "./data/seed";
 import { clearState, loadState, saveState } from "./data/storage";
 import type { AppView, Area, Item, ItemColor, ItemFormValue, ItemPanelMode, ViewMode } from "./types";
+import type { AppRouteSearch } from "./router";
+
+const viewPaths = {
+  inbox: "/inbox",
+  areas: "/areas",
+  today: "/today",
+  upcoming: "/upcoming",
+  search: "/search",
+  tags: "/tags",
+  archive: "/archive",
+  settings: "/settings"
+} as const;
 
 function App() {
   const initialState = loadState({ items: initialItems, areas: initialAreas });
   const [items, setItems] = createSignal<Item[]>(initialState.items);
   const [areas, setAreas] = createSignal<Area[]>(initialState.areas);
-  const [activeView, setActiveView] = createSignal<AppView>("areas");
   const [viewMode, setViewMode] = createSignal<ViewMode>("grid");
   const [dialog, setDialog] = createSignal<"capture" | "area" | null>(null);
-  const [selectedAreaId, setSelectedAreaId] = createSignal<string | null>(null);
-  const [selectedItemId, setSelectedItemId] = createSignal<string | null>(null);
-  const [panelMode, setPanelMode] = createSignal<ItemPanelMode | null>(null);
-  const [draftAreaId, setDraftAreaId] = createSignal<string | null>(null);
-  const [draftParentId, setDraftParentId] = createSignal<string | null>(null);
+  const routeLocation = useRouterState({ select: state => state.location });
+  const routeNavigate = useNavigate();
+
+  const routeSearch = () => routeLocation().search as AppRouteSearch;
+  const selectedAreaId = () => /^\/areas\/([^/]+)$/.exec(routeLocation().pathname)?.[1] ?? null;
+  const activeView = (): AppView => {
+    const segment = routeLocation().pathname.split("/").filter(Boolean)[0];
+    return segment && segment in viewPaths ? segment as AppView : "areas";
+  };
+  const selectedItemId = () => routeSearch().item ?? null;
+  const panelMode = () => routeSearch().panel ?? null;
+  const draftAreaId = () => routeSearch().area ?? null;
+  const draftParentId = () => routeSearch().parent ?? null;
 
   createEffect(
     () => ({ items: items(), areas: areas() }),
@@ -38,10 +58,16 @@ function App() {
   const possibleParents = () => items().filter(item => !item.archived && !item.parentId && item.id !== selectedItemId());
 
   const navigate = (view: AppView) => {
-    setSelectedAreaId(null);
-    setSelectedItemId(null);
-    setPanelMode(null);
-    setActiveView(view);
+    void routeNavigate({ to: viewPaths[view], search: {} });
+  };
+
+  const updatePanelRoute = (search: AppRouteSearch, replace = false) => {
+    const areaId = selectedAreaId();
+    if (areaId) {
+      void routeNavigate({ to: "/areas/$areaId", params: { areaId }, search, replace });
+      return;
+    }
+    void routeNavigate({ to: viewPaths[activeView()], search, replace });
   };
 
   const captureItem = (title: string) => {
@@ -64,14 +90,15 @@ function App() {
   const assignItemToArea = (itemId: string, areaId: string) => updateItem(itemId, { areaId });
 
   const openArea = (areaId: string) => {
-    setActiveView("areas");
-    setSelectedAreaId(areaId);
     const firstItem = items().find(item => item.areaId === areaId && !item.parentId && !item.archived);
-    setSelectedItemId(firstItem?.id ?? null);
-    setPanelMode(firstItem ? "view" : null);
+    void routeNavigate({
+      to: "/areas/$areaId",
+      params: { areaId },
+      search: firstItem ? { item: firstItem.id, panel: "view" } : {}
+    });
   };
 
-  const closeArea = () => { setSelectedAreaId(null); setSelectedItemId(null); setPanelMode(null); };
+  const closeArea = () => { void routeNavigate({ to: "/areas", search: {} }); };
 
   const toggleComplete = (id: string) => {
     setItems(current => current.map(item => item.id === id && item.type === "Task" ? { ...item, status: item.status === "Done" ? "Todo" : "Done", updatedAt: new Date().toISOString() } : item));
@@ -80,16 +107,10 @@ function App() {
   const openItem = (id: string) => {
     const item = items().find(candidate => candidate.id === id);
     if (!item) return;
-    setSelectedItemId(id);
-    setDraftAreaId(item.areaId);
-    setDraftParentId(item.parentId ?? null);
-    setPanelMode(item.archived ? "archived" : "view");
+    updatePanelRoute({ item: id, panel: item.archived ? "archived" : "view" });
   };
   const openNewItem = (areaId: string | null = selectedAreaId(), parentId: string | null = null) => {
-    setSelectedItemId(null);
-    setDraftAreaId(areaId);
-    setDraftParentId(parentId);
-    setPanelMode("create");
+    updatePanelRoute({ panel: "create", area: areaId ?? undefined, parent: parentId ?? undefined });
   };
 
   const saveItem = (value: ItemFormValue) => {
@@ -104,23 +125,23 @@ function App() {
     };
     if (currentEditingId) {
       setItems(current => current.map(item => item.id === currentEditingId ? { ...item, ...normalized, icon: itemTypeIcon(value.type), updatedAt: now } : item));
-      setPanelMode("view");
+      updatePanelRoute({ item: currentEditingId, panel: "view" }, true);
       return;
     }
     const colors: Record<ItemFormValue["type"], ItemColor> = { Task: "violet", Note: "amber", Event: "green", Expense: "orange", Payment: "teal" };
     const newItem: Item = { id: nanoid(), icon: itemTypeIcon(value.type), color: colors[value.type], archived: false, createdAt: now, updatedAt: now, ...normalized };
     setItems(current => [...current, newItem]);
-    setSelectedItemId(newItem.id);
-    setPanelMode("view");
+    updatePanelRoute({ item: newItem.id, panel: "view" }, true);
   };
 
-  const closePanel = () => { setSelectedItemId(null); setPanelMode(null); };
-  const archiveItem = (id: string) => { updateItem(id, { archived: true }); setPanelMode("archived"); };
-  const restoreItem = (id: string) => { updateItem(id, { archived: false }); setPanelMode("view"); };
+  const closePanel = () => updatePanelRoute({});
+  const changePanelMode = (mode: ItemPanelMode) => updatePanelRoute({ item: selectedItemId() ?? undefined, panel: mode, area: draftAreaId() ?? undefined, parent: draftParentId() ?? undefined }, true);
+  const archiveItem = (id: string) => { updateItem(id, { archived: true }); updatePanelRoute({ item: id, panel: "archived" }, true); };
+  const restoreItem = (id: string) => { updateItem(id, { archived: false }); updatePanelRoute({ item: id, panel: "view" }, true); };
   const deleteItem = (id: string) => { if (!window.confirm("Permanently delete this item and its child items?")) return; setItems(current => current.filter(item => item.id !== id && item.parentId !== id)); closePanel(); };
   const toggleFavorite = (id: string) => updateItem(id, { favorite: !items().find(item => item.id === id)?.favorite });
   const archiveCompleted = () => setItems(current => current.map(item => item.type === "Task" && item.status === "Done" ? { ...item, archived: true, updatedAt: new Date().toISOString() } : item));
-  const resetData = () => { clearState(); setItems(initialItems); setAreas(initialAreas); setSelectedAreaId(null); closePanel(); setActiveView("areas"); };
+  const resetData = () => { clearState(); setItems(initialItems); setAreas(initialAreas); void routeNavigate({ to: "/areas", search: {} }); };
 
   return (
     <main class={["app-shell", { "detail-shell": !!selectedArea(), "panel-shell": !!panelMode(), "inspector-closed": !!selectedArea() && !panelMode() }]}> 
@@ -143,7 +164,7 @@ function App() {
       </Show>
 
       <Show when={panelMode()} keyed>
-        {mode => <ItemInspector mode={mode} item={selectedItem()} areas={areas()} children={selectedChildren()} possibleParents={possibleParents()} initialAreaId={draftAreaId()} initialParentId={draftParentId()} onClose={closePanel} onModeChange={setPanelMode} onSave={saveItem} onArchive={() => selectedItemId() && archiveItem(selectedItemId()!)} onRestore={() => selectedItemId() && restoreItem(selectedItemId()!)} onDelete={() => selectedItemId() && deleteItem(selectedItemId()!)} onToggleFavorite={() => selectedItemId() && toggleFavorite(selectedItemId()!)} onOpenItem={openItem} onAddChild={() => openNewItem(selectedItem()?.areaId ?? null, selectedItemId())}/>} 
+        {mode => <ItemInspector mode={mode} item={selectedItem()} areas={areas()} children={selectedChildren()} possibleParents={possibleParents()} initialAreaId={draftAreaId()} initialParentId={draftParentId()} onClose={closePanel} onModeChange={changePanelMode} onSave={saveItem} onArchive={() => selectedItemId() && archiveItem(selectedItemId()!)} onRestore={() => selectedItemId() && restoreItem(selectedItemId()!)} onDelete={() => selectedItemId() && deleteItem(selectedItemId()!)} onToggleFavorite={() => selectedItemId() && toggleFavorite(selectedItemId()!)} onOpenItem={openItem} onAddChild={() => openNewItem(selectedItem()?.areaId ?? null, selectedItemId())}/>} 
       </Show>
 
       <CaptureDialog mode={dialog} onClose={() => setDialog(null)} onCaptureItem={captureItem} onAddArea={addArea}/>
