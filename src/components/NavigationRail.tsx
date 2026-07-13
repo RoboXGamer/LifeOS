@@ -13,11 +13,14 @@ const navItems: { id: AppView; label: string; icon: IconName }[] = [
   { id: "settings", label: "Settings", icon: "settings" }
 ];
 
-export function NavigationRail(props: { active: () => AppView; onNavigate: (view: AppView) => void }) {
+export function NavigationRail(props: { active: () => AppView; inboxCollapsed: () => boolean; onToggleInbox: () => void; onNavigate: (view: AppView) => void }) {
   return (
     <aside class="nav-rail" aria-label="Primary navigation">
       <div class="window-controls" aria-hidden="true"><span class="window-dot red"/><span class="window-dot amber"/><span class="window-dot green"/></div>
       <button class="brand-mark" aria-label="Open Inbox" onClick={() => props.onNavigate("inbox")}><Icon name="inbox" size={33}/></button>
+      <button class="inbox-toggle" aria-label={props.inboxCollapsed() ? "Show Inbox panel" : "Hide Inbox panel"} title={props.inboxCollapsed() ? "Show Inbox panel" : "Hide Inbox panel"} onClick={props.onToggleInbox}>
+        <Icon name="chevronRight" class={props.inboxCollapsed() ? "" : "toggle-point-left"} size={18}/>
+      </button>
       <nav class="nav-items">
         <For each={navItems}>
           {item => (

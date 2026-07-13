@@ -37,6 +37,9 @@ function App() {
   const [dialog, setDialog] = createSignal<"capture" | null>(null);
   const [areaEditorId, setAreaEditorId] = createSignal<"new" | string | null>(null);
   const [saveMessage, setSaveMessage] = createSignal("Saved locally");
+  const mobileQuery = window.matchMedia("(max-width: 850px)");
+  const [isMobile, setIsMobile] = createSignal(mobileQuery.matches);
+  const [inboxCollapsed, setInboxCollapsed] = createSignal(mobileQuery.matches || localStorage.getItem("life-os-inbox-collapsed") === "true");
   const routeLocation = useRouterState({ select: state => state.location });
   const routeNavigate = useNavigate();
 
@@ -66,7 +69,9 @@ function App() {
     }
   };
   window.addEventListener("keydown", openCapture);
-  onCleanup(() => window.removeEventListener("keydown", openCapture));
+  const handleMobileChange = (event: MediaQueryListEvent) => { setIsMobile(event.matches); if (event.matches) setInboxCollapsed(true); };
+  mobileQuery.addEventListener("change", handleMobileChange);
+  onCleanup(() => { window.removeEventListener("keydown", openCapture); mobileQuery.removeEventListener("change", handleMobileChange); });
 
   const inboxItems = () => items().filter(item => item.areaId === null && !item.archived);
   const activeAreas = () => areas().filter(area => !area.archived);
@@ -81,8 +86,15 @@ function App() {
   };
 
   const navigate = (view: AppView) => {
+    if (isMobile()) setInboxCollapsed(true);
     void routeNavigate({ to: viewPaths[view], search: {} });
   };
+
+  const toggleInboxPanel = () => setInboxCollapsed(current => {
+    const next = !current;
+    if (!isMobile()) localStorage.setItem("life-os-inbox-collapsed", String(next));
+    return next;
+  });
 
   const updatePanelRoute = (search: AppRouteSearch, replace = false) => {
     const areaId = selectedAreaId();
@@ -148,6 +160,7 @@ function App() {
   const openItem = (id: string, requestedMode: "view" | "edit" = "view") => {
     const item = items().find(candidate => candidate.id === id);
     if (!item) return;
+    if (isMobile()) setInboxCollapsed(true);
     updatePanelRoute({ item: id, panel: item.archived ? "archived" : requestedMode });
   };
   const openNewItem = (areaId: string | null = selectedAreaId(), parentId: string | null = null) => {
@@ -188,9 +201,10 @@ function App() {
   const resetData = () => { clearState(); setWorkspace(initialWorkspace); setItems(initialItems); setAreas(initialAreas); setTags(initialTags); void routeNavigate({ to: "/areas", search: {} }); };
 
   return (
-    <main class={["app-shell", { "detail-shell": !!selectedArea(), "panel-shell": !!panelMode(), "inspector-closed": !!selectedArea() && !panelMode() }]}> 
-      <NavigationRail active={() => selectedArea() ? "areas" : activeView()} onNavigate={navigate}/>
+    <main class={["app-shell", { "detail-shell": !!selectedArea(), "panel-shell": !!panelMode(), "inspector-closed": !!selectedArea() && !panelMode(), "inbox-collapsed": inboxCollapsed() }]}> 
+      <NavigationRail active={() => selectedArea() ? "areas" : activeView()} inboxCollapsed={inboxCollapsed} onToggleInbox={toggleInboxPanel} onNavigate={navigate}/>
       <InboxPanel items={inboxItems} onQuickCapture={() => setDialog("capture")} onOpenItem={openItem}/>
+      <Show when={isMobile() && !inboxCollapsed()}><button class="inbox-drawer-backdrop" aria-label="Close Inbox panel" onClick={() => setInboxCollapsed(true)}/></Show>
 
       <Show when={selectedArea()} keyed fallback={
         <Switch fallback={<AreasPanel areas={activeAreas} viewMode={viewMode} onViewModeChange={setViewMode} onAddArea={() => setAreaEditorId("new")} onAssignItem={assignItemToArea} onOpenArea={openArea} onEditArea={setAreaEditorId} onArchiveArea={archiveArea}/>}> 
