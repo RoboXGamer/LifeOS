@@ -1,60 +1,69 @@
-.center {
-  display: flex;
-  flex-direction: column;
+:root {
+  --color-bg-page: hsl(228, 56%, 98%);
+  --color-text: hsl(230, 55%, 15%);
+  --color-surface: hsla(0, 0%, 100%, 0.8);
+  --color-border: hsl(221, 30%, 89%);
+  --color-shadow: rgba(55, 65, 110, 0.08);
+  --color-purple: #5a45e5;
+}
+
+/* @media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg-page: hsl(220, 26%, 7%);
+    --color-text: hsl(210, 20%, 96%);
+    --color-surface: hsla(223, 23%, 12%, 0.8);
+    --color-border: hsl(222, 15%, 22%);
+    --color-shadow: hsla(0, 0%, 0%, 0.45);
+  }
+} */
+
+body {
+  background: var(--color-bg-page);
+  color: var(--color-text);
+}
+
+#app {
+  height: 100%;
+  border-radius: 20px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 18px 50px var(--color-shadow);
+
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  grid-template-rows: 1fr;
+
+  overflow: hidden;
+}
+
+.sidebar {
+  border-right: 1px solid var(--color-border);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  text-align: center;
+  padding: 8px;
+}
+
+.nav-button {
+  width: 48px;
+  height: 48px;
+  display: grid;
   place-items: center;
-  flex-grow: 1;
-
-  @media (max-width: 1024px) {
-    padding: 32px 20px 24px;
-    gap: 1.125rem;
-  }
+  color: hsl(225, 18%, 48%);
+  border-radius: 14px;
+  transition: 0.2s ease;
 }
 
-hr {
-  width: 100%;
+.nav-button:hover {
+  color: var(--purple);
+  background: hsl(250, 100%, 98%);
 }
 
-#todo-form-container {
-  margin-block: 1rem;
+.nav-button.active {
+  color: var(--purple);
+  background: hsl(250, 100%, 96%);
 }
 
-form {
-  display: flex;
-
-  > * {
-    font: inherit;
-    font-size: 16px;
-    padding: 4px 16px;
-  }
-}
-
-#todo {
-  border: 2px solid #777;
-  min-width: 35ch;
-}
-
-button {
-  padding: 4px 16px;
-  color: var(--accent);
-  background: var(--accent-bg);
-  border: 2px solid transparent;
-  transition: border-color 0.3s;
-
-  &:hover {
-    border-color: var(--accent-border);
-  }
-  &:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-  }
-}
-
-#todo-list-container {
-  width: 100%;
-  li {
-    display: flex;
-    justify-content: space-between;
-    padding: 1rem;
-    border-bottom: 1px solid var(--border);
-  }
+.main {
+  /* background: red; */
 }
