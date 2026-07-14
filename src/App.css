@@ -5,6 +5,7 @@
   --color-border: hsl(221, 30%, 89%);
   --color-shadow: rgba(55, 65, 110, 0.08);
   --color-purple: #5a45e5;
+  --color-purple-foreground: #fff;
 }
 
 /* @media (prefers-color-scheme: dark) {
@@ -51,19 +52,44 @@ body {
   place-items: center;
   color: hsl(225, 18%, 48%);
   border-radius: 14px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0;
   transition: 0.2s ease;
 }
 
 .nav-button:hover {
-  color: var(--purple);
-  background: hsl(250, 100%, 98%);
+  color: var(--color-purple);
+  background: color-mix(in srgb, var(--color-purple) 8%, transparent);
 }
 
 .nav-button.active {
-  color: var(--purple);
-  background: hsl(250, 100%, 96%);
+  color: var(--color-purple);
+  background: color-mix(in srgb, var(--color-purple) 12%, transparent);
+}
+
+.nav-items {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  place-self: center;
+}
+
+.nav-sep {
+  width: 32px;
+  border: none;
+  height: 1px;
+  background: var(--color-border);
+  margin: 6px 0;
+}
+
+.avatar {
+  place-self: center;
+  margin-bottom: 12px;
 }
 
 .main {
-  /* background: red; */
+  padding: 24px 16px;
 }
