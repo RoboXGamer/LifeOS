@@ -92,4 +92,7 @@ body {
 
 .main {
   padding: 24px 16px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
