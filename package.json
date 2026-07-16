@@ -10,17 +10,17 @@
     "convex": "convex"
   },
   "dependencies": {
-    "@solidjs/web": "2.0.0-beta.17",
+    "@solidjs/web": "2.0.0-beta.18",
     "@tanstack/solid-router": "2.0.0-beta.23",
     "convex": "^1.42.1",
     "nanoid": "^5.1.16",
-    "solid-js": "2.0.0-beta.17",
+    "solid-js": "2.0.0-beta.18",
     "zod": "4.4.3"
   },
   "devDependencies": {
     "@types/node": "^26.1.0",
     "typescript": "~6.0.2",
     "vite": "^8.1.1",
-    "vite-plugin-solid": "3.0.0-next.7"
+    "vite-plugin-solid": "3.0.0-next.10"
   }
 }
