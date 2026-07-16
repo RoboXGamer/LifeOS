@@ -2,9 +2,10 @@ import { createSignal, For } from "solid-js";
 import "./App.css";
 import { Icon } from "./Icon.tsx";
 import Avatar from "./Avatar.tsx";
+import { Outlet, Link, useLocation } from "@tanstack/solid-router";
 
 const navItems = [
-  { id: "areas", label: "Areas", icon: "grid" },
+  { id: "", label: "Areas", icon: "grid" },
   { id: "today", label: "Today", icon: "checkSquare" },
   { id: "upcoming", label: "Upcoming", icon: "calendar" },
   { id: "tags", label: "Tags", icon: "tag" },
@@ -13,7 +14,7 @@ const navItems = [
 
 function App() {
   const [inboxOpen, toggleInbox] = createSignal(false);
-  const [activeView, setActiveView] = createSignal<string>(navItems[0].id);
+  const location = useLocation();
   return (
     <>
       <div id="app">
@@ -31,23 +32,24 @@ function App() {
             <hr class="nav-sep" />
             <For each={navItems}>
               {(item) => (
-                <button
-                  class={["nav-button", { active: activeView() === item.id }]}
+                <Link
+                  class={[
+                    "nav-button" +
+                      ("/" + item.id === location().pathname ? " active" : ""),
+                  ]}
                   aria-label={item.label}
                   title={item.label}
-                  onClick={() => setActiveView(item.id)}
+                  to={"/" + item.id}
                 >
                   <Icon name={item.icon} size={22} />
-                </button>
+                </Link>
               )}
             </For>
           </nav>
           <Avatar size={40} fallback="PR" />
         </aside>
         <main class="main">
-          <h2>
-            {navItems.find((item) => item.id === activeView())?.label ?? "???"}
-          </h2>
+          <Outlet />
         </main>
       </div>
     </>
