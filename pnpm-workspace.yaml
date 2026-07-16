@@ -1,0 +1,2 @@
+minimumReleaseAgeExclude:
+  - vite-plugin-solid@3.0.0-next.10

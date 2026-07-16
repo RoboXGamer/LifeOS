@@ -11,7 +11,7 @@
 
   scroll-behavior: smooth;
   font: 18px/145% var(--sans);
-  color-scheme: light dark;
+  color-scheme: light;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;

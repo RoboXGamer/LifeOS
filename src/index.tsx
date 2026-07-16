@@ -7,6 +7,7 @@ import {
   createRouter,
   RouterProvider,
 } from "@tanstack/solid-router";
+import Areas from "./pages/Areas.tsx";
 
 const rootRoute = createRootRoute({
   component: () => (
@@ -21,7 +22,7 @@ const indexRoute = createRoute({
   path: "/",
   component: () => (
     <>
-      <h2>Areas</h2>
+      <Areas />
     </>
   ),
 });

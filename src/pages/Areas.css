@@ -1,0 +1,104 @@
+h2 {
+  margin-bottom: 16px;
+}
+
+.areas-grid {
+  --card-height: 230px;
+  padding-right: 1rem;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  grid-template-rows: repeat(auto-fill, var(--card-height));
+  gap: 32px 16px;
+  align-content: start;
+  scrollbar-gutter: stable;
+  padding-block: 24px;
+}
+
+.area-item {
+  --_deco-color: var(--color-purple);
+
+  transition: translate 0.2s ease;
+  min-height: var(--card-height);
+  border-radius: 16px;
+  background: var(--color-surface);
+  box-shadow: 0 8px 16px var(--color-shadow);
+
+  display: grid;
+  grid-template-rows: 1fr auto;
+  border: 1px solid var(--color-border);
+  /* overflow: hidden; */
+
+  .deco {
+    border-radius: inherit;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    background-color: hsl(from var(--_deco-color) h s l / 14%);
+    border: 1px solid hsl(from var(--_deco-color) h s l / 50%);
+    position: relative;
+    display: grid;
+    place-items: center;
+
+    color: var(--_deco-color);
+
+    .deco-blobs {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+
+      .shape {
+        position: absolute;
+        background: rgb(from var(--_deco-color) r g b / 13%);
+      }
+      .shape-a {
+        width: 150px;
+        height: 150px;
+        right: -30px;
+        top: -40px;
+        border-radius: 48% 52% 64% 36%;
+        transform: rotate(22deg);
+      }
+      .shape-b {
+        width: 170px;
+        height: 120px;
+        left: -50px;
+        bottom: -65px;
+        border-radius: 50% 50% 0 0;
+        transform: rotate(20deg);
+      }
+    }
+
+    &::after {
+      content: "";
+      position: absolute;
+      width: 110px;
+      height: 40px;
+      inset: -20px calc(100% - 100px) calc(100% - 60px) 10px;
+      border-radius: inherit;
+      --left: hsl(from var(--_deco-color) h s l / 70%);
+      --right: hsl(from var(--_deco-color) h s l / 50%);
+      background: linear-gradient(to right, var(--left), var(--right));
+      border: 1px solid hsl(from var(--_deco-color) h s l / 100%);
+      border-bottom: 0;
+    }
+  }
+
+  .area-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px;
+    color: var(--_deco-color);
+    h3 {
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--color-text);
+    }
+  }
+}
+
+.area-item:is(:hover, :focus-visible) {
+  translate: 0 -4px;
+}
