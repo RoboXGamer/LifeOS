@@ -8,6 +8,7 @@ import {
   RouterProvider,
 } from "@tanstack/solid-router";
 import Areas from "./pages/Areas.tsx";
+import { ConvexProvider, convex } from "./convex";
 
 const rootRoute = createRootRoute({
   component: () => (
@@ -84,4 +85,11 @@ declare module "@tanstack/solid-router" {
 }
 
 const root = document.getElementById("root");
-render(() => <RouterProvider router={router} />, root!);
+render(
+  () => (
+    <ConvexProvider client={convex}>
+      <RouterProvider router={router} />
+    </ConvexProvider>
+  ),
+  root!,
+);
