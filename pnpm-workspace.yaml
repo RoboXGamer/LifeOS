@@ -2,3 +2,6 @@ allowBuilds:
   esbuild: true
 minimumReleaseAgeExclude:
   - vite-plugin-solid@3.0.0-next.10
+  - '@solidjs/signals@2.0.0-beta.24'
+  - '@solidjs/web@2.0.0-beta.24'
+  - solid-js@2.0.0-beta.24
