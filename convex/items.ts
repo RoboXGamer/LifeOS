@@ -1,0 +1,386 @@
+import { v } from "convex/values";
+import type { Doc, Id } from "./_generated/dataModel";
+import type { MutationCtx, QueryCtx } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
+import {
+  requireAreaOwner,
+  requireItemOwner,
+  requireWorkspaceOwner,
+} from "./lib/auth";
+import {
+  cleanAmount,
+  cleanDescription,
+  cleanDueDate,
+  cleanTagName,
+  cleanTitle,
+} from "./lib/validation";
+
+const itemType = v.union(
+  v.literal("Task"),
+  v.literal("Note"),
+  v.literal("Event"),
+  v.literal("Expense"),
+  v.literal("Payment"),
+);
+const nullableItemType = v.union(itemType, v.null());
+const itemStatus = v.union(
+  v.literal("Todo"),
+  v.literal("In Progress"),
+  v.literal("Done"),
+);
+const nullableItemStatus = v.union(itemStatus, v.null());
+const nullablePriority = v.union(
+  v.literal(1),
+  v.literal(2),
+  v.literal(3),
+  v.null(),
+);
+
+const itemInput = {
+  title: v.string(),
+  areaId: v.union(v.id("areas"), v.null()),
+  type: nullableItemType,
+  status: nullableItemStatus,
+  priority: nullablePriority,
+  dueDate: v.union(v.string(), v.null()),
+  amount: v.union(v.number(), v.null()),
+  isSettled: v.union(v.boolean(), v.null()),
+  description: v.union(v.string(), v.null()),
+  parentId: v.union(v.id("items"), v.null()),
+  tags: v.array(v.string()),
+};
+
+type ItemType = "Task" | "Note" | "Event" | "Expense" | "Payment";
+type ItemStatus = "Todo" | "In Progress" | "Done";
+type ItemInput = {
+  title: string;
+  areaId: Id<"areas"> | null;
+  type: ItemType | null;
+  status: ItemStatus | null;
+  priority: 1 | 2 | 3 | null;
+  dueDate: string | null;
+  amount: number | null;
+  isSettled: boolean | null;
+  description: string | null;
+  parentId: Id<"items"> | null;
+  tags: string[];
+};
+
+type DatabaseCtx = QueryCtx | MutationCtx;
+
+async function itemWithTags(ctx: DatabaseCtx, item: Doc<"items">) {
+  const links = await ctx.db
+    .query("itemTags")
+    .withIndex("by_itemId", (q) => q.eq("itemId", item._id))
+    .take(24);
+  const tags = (
+    await Promise.all(links.map((link) => ctx.db.get("tags", link.tagId)))
+  )
+    .filter((tag): tag is Doc<"tags"> => tag !== null)
+    .map((tag) => tag.name);
+  return { ...item, tags };
+}
+
+async function visibleAreaIds(ctx: QueryCtx, workspaceId: Id<"workspaces">) {
+  const areas = await ctx.db
+    .query("areas")
+    .withIndex("by_workspaceId_and_archived", (q) =>
+      q.eq("workspaceId", workspaceId).eq("archived", false),
+    )
+    .take(100);
+  return new Set(areas.map((area) => area._id));
+}
+
+async function validateLocation(
+  ctx: DatabaseCtx,
+  workspaceId: Id<"workspaces">,
+  areaId: Id<"areas"> | null,
+  type: ItemType | null,
+) {
+  if (!areaId) return;
+  if (!type) throw new Error("Choose an Item type before assigning an Area.");
+  const { area } = await requireAreaOwner(ctx, areaId);
+  if (area.workspaceId !== workspaceId || area.archived) {
+    throw new Error("Area not found.");
+  }
+}
+
+function normalizedFields(input: ItemInput) {
+  const type = input.type ?? undefined;
+  const description = cleanDescription(input.description ?? undefined);
+  const shared = {
+    title: cleanTitle(input.title),
+    type,
+    priority: input.priority ?? undefined,
+    dueDate: cleanDueDate(input.dueDate),
+    description,
+  };
+  if (type === "Task") {
+    return {
+      ...shared,
+      status: input.status ?? "Todo",
+      amount: undefined,
+      isSettled: undefined,
+    };
+  }
+  if (type === "Expense" || type === "Payment") {
+    return {
+      ...shared,
+      status: undefined,
+      amount: cleanAmount(input.amount),
+      isSettled: input.isSettled ?? false,
+    };
+  }
+  return {
+    ...shared,
+    status: undefined,
+    amount: undefined,
+    isSettled: undefined,
+  };
+}
+
+async function setItemTags(
+  ctx: MutationCtx,
+  itemId: Id<"items">,
+  workspaceId: Id<"workspaces">,
+  values: string[],
+) {
+  if (values.length > 12) throw new Error("Use no more than 12 tags per Item.");
+  const normalized = [
+    ...new Map(
+      values.map((value) => {
+        const tag = cleanTagName(value);
+        return [tag.normalizedName, tag] as const;
+      }),
+    ).values(),
+  ];
+  const existingLinks = await ctx.db
+    .query("itemTags")
+    .withIndex("by_itemId", (q) => q.eq("itemId", itemId))
+    .take(100);
+  for (const link of existingLinks) await ctx.db.delete("itemTags", link._id);
+
+  for (const value of normalized) {
+    let tag = await ctx.db
+      .query("tags")
+      .withIndex("by_workspaceId_and_normalizedName", (q) =>
+        q
+          .eq("workspaceId", workspaceId)
+          .eq("normalizedName", value.normalizedName),
+      )
+      .unique();
+    if (!tag) {
+      const tagId = await ctx.db.insert("tags", {
+        workspaceId,
+        name: value.name,
+        normalizedName: value.normalizedName,
+        createdAt: Date.now(),
+      });
+      tag = (await ctx.db.get("tags", tagId))!;
+    }
+    await ctx.db.insert("itemTags", {
+      workspaceId,
+      itemId,
+      tagId: tag._id,
+      createdAt: Date.now(),
+    });
+  }
+}
+
+async function family(ctx: DatabaseCtx, item: Doc<"items">) {
+  const rootId = item.parentId ?? item._id;
+  const root = item.parentId ? await ctx.db.get("items", rootId) : item;
+  if (!root) throw new Error("Parent Item not found.");
+  const children = await ctx.db
+    .query("items")
+    .withIndex("by_parentId", (q) => q.eq("parentId", rootId))
+    .take(100);
+  return { root, children };
+}
+
+export const list = query({
+  args: { workspaceId: v.id("workspaces") },
+  handler: async (ctx, args) => {
+    await requireWorkspaceOwner(ctx, args.workspaceId);
+    const [items, areaIds] = await Promise.all([
+      ctx.db
+        .query("items")
+        .withIndex("by_workspaceId_and_archived", (q) =>
+          q.eq("workspaceId", args.workspaceId).eq("archived", false),
+        )
+        .take(300),
+      visibleAreaIds(ctx, args.workspaceId),
+    ]);
+    const visible = items.filter(
+      (item) => item.areaId === null || areaIds.has(item.areaId),
+    );
+    return await Promise.all(visible.map((item) => itemWithTags(ctx, item)));
+  },
+});
+
+export const listArchived = query({
+  args: { workspaceId: v.id("workspaces") },
+  handler: async (ctx, args) => {
+    await requireWorkspaceOwner(ctx, args.workspaceId);
+    const items = await ctx.db
+      .query("items")
+      .withIndex("by_workspaceId_and_archived", (q) =>
+        q.eq("workspaceId", args.workspaceId).eq("archived", true),
+      )
+      .take(300);
+    return await Promise.all(items.map((item) => itemWithTags(ctx, item)));
+  },
+});
+
+export const listByArea = query({
+  args: { areaId: v.id("areas") },
+  handler: async (ctx, args) => {
+    const { area } = await requireAreaOwner(ctx, args.areaId);
+    if (area.archived) return [];
+    const items = await ctx.db
+      .query("items")
+      .withIndex("by_areaId_and_archived", (q) =>
+        q.eq("areaId", area._id).eq("archived", false),
+      )
+      .take(300);
+    return await Promise.all(items.map((item) => itemWithTags(ctx, item)));
+  },
+});
+
+export const get = query({
+  args: { itemId: v.id("items") },
+  handler: async (ctx, args) => {
+    const { item } = await requireItemOwner(ctx, args.itemId);
+    return await itemWithTags(ctx, item);
+  },
+});
+
+export const quickCapture = mutation({
+  args: { workspaceId: v.id("workspaces"), title: v.string() },
+  handler: async (ctx, args) => {
+    await requireWorkspaceOwner(ctx, args.workspaceId);
+    const now = Date.now();
+    return await ctx.db.insert("items", {
+      workspaceId: args.workspaceId,
+      title: cleanTitle(args.title),
+      areaId: null,
+      parentId: null,
+      archived: false,
+      createdAt: now,
+      updatedAt: now,
+    });
+  },
+});
+
+export const create = mutation({
+  args: { workspaceId: v.id("workspaces"), ...itemInput },
+  handler: async (ctx, args) => {
+    await requireWorkspaceOwner(ctx, args.workspaceId);
+    let areaId = args.areaId;
+    let parentId = args.parentId;
+    if (parentId) {
+      const { item: parent } = await requireItemOwner(ctx, parentId);
+      if (
+        parent.workspaceId !== args.workspaceId ||
+        parent.parentId ||
+        parent.archived
+      ) {
+        throw new Error("Choose a top-level active parent Item.");
+      }
+      areaId = parent.areaId;
+    }
+    await validateLocation(ctx, args.workspaceId, areaId, args.type);
+    const now = Date.now();
+    const fields = normalizedFields({ ...args, areaId, parentId });
+    const itemId = await ctx.db.insert("items", {
+      workspaceId: args.workspaceId,
+      areaId,
+      parentId,
+      archived: false,
+      createdAt: now,
+      updatedAt: now,
+      ...fields,
+    });
+    await setItemTags(ctx, itemId, args.workspaceId, args.tags);
+    return itemId;
+  },
+});
+
+export const update = mutation({
+  args: { itemId: v.id("items"), ...itemInput },
+  handler: async (ctx, args) => {
+    const { item } = await requireItemOwner(ctx, args.itemId);
+    const currentFamily = await family(ctx, item);
+    let areaId = args.areaId;
+    let parentId = args.parentId;
+
+    if (item.parentId && areaId !== item.areaId) {
+      if (areaId !== null) {
+        throw new Error("Move the parent Item to move this family.");
+      }
+      parentId = null;
+    }
+    const ownChildren = item.parentId ? [] : currentFamily.children;
+
+    if (ownChildren.length > 0 && parentId) {
+      throw new Error("An Item with children cannot become a child.");
+    }
+    if (parentId) {
+      const { item: parent } = await requireItemOwner(ctx, parentId);
+      if (
+        parent._id === item._id ||
+        parent.workspaceId !== item.workspaceId ||
+        parent.parentId ||
+        parent.archived
+      ) {
+        throw new Error("Choose a top-level active parent Item.");
+      }
+      areaId = parent.areaId;
+    }
+    await validateLocation(ctx, item.workspaceId, areaId, args.type);
+    const now = Date.now();
+    const fields = normalizedFields({ ...args, areaId, parentId });
+    await ctx.db.patch("items", item._id, {
+      areaId,
+      parentId,
+      updatedAt: now,
+      ...fields,
+    });
+    if (!item.parentId && areaId !== item.areaId) {
+      for (const child of currentFamily.children) {
+        await ctx.db.patch("items", child._id, { areaId, updatedAt: now });
+      }
+    }
+    await setItemTags(ctx, item._id, item.workspaceId, args.tags);
+    return null;
+  },
+});
+
+export const setTaskDone = mutation({
+  args: { itemId: v.id("items"), done: v.boolean() },
+  handler: async (ctx, args) => {
+    const { item } = await requireItemOwner(ctx, args.itemId);
+    if (item.type !== "Task") throw new Error("Only Tasks can be completed.");
+    await ctx.db.patch("items", item._id, {
+      status: args.done ? "Done" : "Todo",
+      updatedAt: Date.now(),
+    });
+    return null;
+  },
+});
+
+export const setArchived = mutation({
+  args: { itemId: v.id("items"), archived: v.boolean() },
+  handler: async (ctx, args) => {
+    const { item } = await requireItemOwner(ctx, args.itemId);
+    const { root, children } = await family(ctx, item);
+    const now = Date.now();
+    for (const member of [root, ...children]) {
+      await ctx.db.patch("items", member._id, {
+        archived: args.archived,
+        updatedAt: now,
+      });
+    }
+    return null;
+  },
+});

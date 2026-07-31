@@ -1,9 +1,12 @@
-import { createSignal, For } from "solid-js";
+import { createEffect, createSignal, For, onSettled } from "solid-js";
 import "./App.css";
 import { Icon } from "./Icon.tsx";
 import { Outlet, Link, useLocation } from "@tanstack/solid-router";
 import { WorkspaceProvider } from "./features/workspaces/context";
 import { WorkspaceMenu } from "./features/workspaces/WorkspaceMenu";
+import { ItemProvider } from "./features/items/context";
+import { InboxPanel } from "./features/items/InboxPanel";
+import { ItemInspector } from "./features/items/ItemInspector";
 
 const navItems = [
   { id: "areas", label: "Areas", icon: "grid" },
@@ -16,7 +19,9 @@ const navItems = [
 function App() {
   return (
     <WorkspaceProvider>
-      <AppShell />
+      <ItemProvider>
+        <AppShell />
+      </ItemProvider>
     </WorkspaceProvider>
   );
 }
@@ -24,6 +29,36 @@ function App() {
 function AppShell() {
   const [inboxOpen, toggleInbox] = createSignal(false);
   const location = useLocation();
+  const closeInbox = (returnFocus = true) => {
+    toggleInbox(false);
+    if (returnFocus) {
+      queueMicrotask(() =>
+        document
+          .querySelector<HTMLButtonElement>('button[aria-label="Inbox"]')
+          ?.focus(),
+      );
+    }
+  };
+
+  createEffect(inboxOpen, (open) => {
+    if (open) {
+      queueMicrotask(() =>
+        document.querySelector<HTMLInputElement>("#quick-capture")?.focus(),
+      );
+    }
+  });
+
+  onSettled(() => {
+    const openInbox = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.code === "Space") {
+        event.preventDefault();
+        toggleInbox(true);
+      }
+    };
+    window.addEventListener("keydown", openInbox);
+    return () => window.removeEventListener("keydown", openInbox);
+  });
+
   return (
     <>
       <div id="app">
@@ -51,6 +86,7 @@ function AppShell() {
                   aria-label={item.label}
                   title={item.label}
                   to={`/app/${item.id}`}
+                  onClick={() => toggleInbox(false)}
                 >
                   <Icon name={item.icon} size={22} />
                 </Link>
@@ -62,6 +98,15 @@ function AppShell() {
         <main class="main">
           <Outlet />
         </main>
+        <div class="overlay-layer">
+          <div
+            class={["inbox-host", { open: inboxOpen() }]}
+            aria-hidden={inboxOpen() ? "false" : "true"}
+          >
+            <InboxPanel onClose={closeInbox} />
+          </div>
+          <ItemInspector />
+        </div>
       </div>
     </>
   );

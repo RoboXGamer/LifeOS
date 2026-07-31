@@ -6,6 +6,7 @@ import {
   redirect,
 } from "@tanstack/solid-router";
 import App from "./App";
+import AreaDetail from "./pages/AreaDetail";
 import Areas from "./pages/Areas";
 import {
   NotFoundPage,
@@ -19,6 +20,8 @@ export interface AppRouteSearch {
   item?: string;
   mode?: ItemPanelMode;
   parent?: string;
+  area?: string;
+  date?: string;
 }
 
 function validateAppSearch(search: Record<string, unknown>): AppRouteSearch {
@@ -29,6 +32,8 @@ function validateAppSearch(search: Record<string, unknown>): AppRouteSearch {
       ? (search.mode as ItemPanelMode)
       : undefined,
     parent: typeof search.parent === "string" ? search.parent : undefined,
+    area: typeof search.area === "string" ? search.area : undefined,
+    date: typeof search.date === "string" ? search.date : undefined,
   };
 }
 
@@ -52,13 +57,13 @@ const landingRoute = createRoute({
 
 const appRoute = createRoute({
   getParentRoute: () => rootRoute,
-  id: "app",
+  path: "/app",
   component: App,
 });
 
 const appIndexRoute = createRoute({
   getParentRoute: () => appRoute,
-  path: "/app",
+  path: "/",
   beforeLoad: () => {
     throw redirect({ to: "/app/areas" });
   },
@@ -66,56 +71,56 @@ const appIndexRoute = createRoute({
 
 const areasRoute = createRoute({
   getParentRoute: () => appRoute,
-  path: "/app/areas",
+  path: "/areas",
   validateSearch: validateAppSearch,
   component: Areas,
 });
 
 const areaRoute = createRoute({
   getParentRoute: () => appRoute,
-  path: "/app/areas/$areaId",
+  path: "/areas/$areaId",
   validateSearch: validateAppSearch,
-  component: () => <PlaceholderPage title="Area" />,
+  component: AreaDetail,
 });
 
 const areaCalendarRoute = createRoute({
   getParentRoute: () => appRoute,
-  path: "/app/areas/$areaId/calendar",
+  path: "/areas/$areaId/calendar",
   validateSearch: validateAppSearch,
   component: () => <PlaceholderPage title="Area calendar" />,
 });
 
 const todayRoute = createRoute({
   getParentRoute: () => appRoute,
-  path: "/app/today",
+  path: "/today",
   validateSearch: validateAppSearch,
   component: () => <PlaceholderPage title="Today" />,
 });
 
 const upcomingRoute = createRoute({
   getParentRoute: () => appRoute,
-  path: "/app/upcoming",
+  path: "/upcoming",
   validateSearch: validateAppSearch,
   component: () => <PlaceholderPage title="Upcoming" />,
 });
 
 const tagsRoute = createRoute({
   getParentRoute: () => appRoute,
-  path: "/app/tags",
+  path: "/tags",
   validateSearch: validateAppSearch,
   component: () => <PlaceholderPage title="Tags" />,
 });
 
 const archiveRoute = createRoute({
   getParentRoute: () => appRoute,
-  path: "/app/archive",
+  path: "/archive",
   validateSearch: validateAppSearch,
   component: () => <PlaceholderPage title="Archive" />,
 });
 
 const settingsRoute = createRoute({
   getParentRoute: () => appRoute,
-  path: "/app/settings",
+  path: "/settings",
   validateSearch: validateAppSearch,
   component: () => <PlaceholderPage title="Settings" />,
 });

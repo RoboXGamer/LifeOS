@@ -24,6 +24,7 @@ body {
 }
 
 #app {
+  position: relative;
   height: 100%;
   border-radius: 20px;
   background: var(--color-surface);
@@ -35,6 +36,19 @@ body {
   grid-template-rows: 1fr;
 
   overflow: hidden;
+}
+
+.overlay-layer {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.overlay-layer > * {
+  pointer-events: auto;
 }
 
 .sidebar {

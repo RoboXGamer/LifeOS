@@ -32,3 +32,52 @@ export function cleanIcon(value: string): string {
   }
   return icon;
 }
+
+export function cleanTitle(value: string): string {
+  return cleanName(value, "Item title", 240);
+}
+
+export function cleanDueDate(
+  value: string | null | undefined,
+): string | undefined {
+  if (!value) return undefined;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    throw new Error("Choose a valid due date.");
+  }
+  const date = new Date(`${value}T00:00:00.000Z`);
+  if (
+    Number.isNaN(date.valueOf()) ||
+    date.toISOString().slice(0, 10) !== value
+  ) {
+    throw new Error("Choose a valid due date.");
+  }
+  return value;
+}
+
+export function cleanAmount(
+  value: number | null | undefined,
+): number | undefined {
+  if (value == null) return undefined;
+  if (!Number.isFinite(value) || value < 0 || value > 1_000_000_000_000) {
+    throw new Error("Amount must be a positive number.");
+  }
+  return Math.round(value * 100) / 100;
+}
+
+export function cleanTagName(value: string): {
+  name: string;
+  normalizedName: string;
+} {
+  const name = value.trim().replace(/^#+/, "").replace(/\s+/g, " ");
+  const normalizedName = name.toLowerCase();
+  if (
+    normalizedName.length < 1 ||
+    normalizedName.length > 40 ||
+    !/^[a-z0-9][a-z0-9 _-]*$/.test(normalizedName)
+  ) {
+    throw new Error(
+      "Tags must be 1–40 characters using letters, numbers, spaces, _ or -.",
+    );
+  }
+  return { name, normalizedName };
+}

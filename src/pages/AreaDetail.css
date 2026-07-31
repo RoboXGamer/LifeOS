@@ -1,0 +1,247 @@
+.area-detail-page {
+  min-height: 0;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.area-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 4px 8px 12px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.area-detail-heading {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.area-detail-heading > a {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border: 1px solid var(--color-border);
+  border-radius: 11px;
+  color: hsl(225 14% 42%);
+  background: white;
+  text-decoration: none;
+}
+
+.area-detail-heading > a svg {
+  rotate: 180deg;
+}
+
+.area-detail-mark {
+  --_area-color: var(--color-purple);
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border: 1px solid color-mix(in srgb, var(--_area-color) 35%, white);
+  border-radius: 14px;
+  color: var(--_area-color);
+  background: color-mix(in srgb, var(--_area-color) 11%, white);
+}
+
+.area-detail-heading > div {
+  min-width: 0;
+}
+
+.area-detail-heading > div > span {
+  color: var(--color-purple);
+  font-size: 0.66rem;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.area-detail-heading h2 {
+  overflow: hidden;
+  font-size: clamp(1.45rem, 4vw, 2rem);
+  letter-spacing: -0.035em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.area-detail-heading p {
+  overflow: hidden;
+  color: hsl(225 13% 47%);
+  font-size: 0.73rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.area-item-list {
+  min-height: 0;
+  display: grid;
+  align-content: start;
+  gap: 7px;
+  padding: 0 8px 18px;
+  overflow-y: auto;
+}
+
+.life-item {
+  min-height: 62px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: rgb(255 255 255 / 82%);
+  box-shadow: 0 5px 16px var(--color-shadow);
+  transition:
+    border-color 0.15s ease,
+    translate 0.15s ease;
+}
+
+.life-item:hover {
+  border-color: color-mix(in srgb, var(--color-purple) 28%, white);
+  translate: 0 -1px;
+}
+
+.life-item-icon,
+.task-toggle {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 11px;
+  color: var(--color-purple);
+  background: color-mix(in srgb, var(--color-purple) 9%, white);
+}
+
+.task-toggle {
+  cursor: pointer;
+}
+
+.life-item.complete .task-toggle {
+  color: white;
+  background: var(--color-purple);
+}
+
+.life-item-main {
+  min-width: 0;
+  display: grid;
+  justify-items: start;
+  gap: 2px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+
+.life-item-main strong {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 0.82rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.life-item.complete .life-item-main strong {
+  color: hsl(225 11% 52%);
+  text-decoration: line-through;
+}
+
+.life-item-main span {
+  color: hsl(225 12% 49%);
+  font-size: 0.68rem;
+}
+
+.child-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  color: hsl(225 12% 49%);
+  font-size: 0.68rem;
+}
+
+.life-item-more {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 10px;
+  color: hsl(225 12% 44%);
+  background: transparent;
+  cursor: pointer;
+}
+
+.life-item-more:hover {
+  color: var(--color-purple);
+  background: hsl(228 50% 96%);
+}
+
+.area-detail-empty {
+  min-height: 360px;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 9px;
+  text-align: center;
+}
+
+.area-detail-empty > span {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  color: var(--color-purple);
+  background: color-mix(in srgb, var(--color-purple) 10%, white);
+}
+
+.area-detail-empty p {
+  max-width: 380px;
+  color: hsl(225 14% 45%);
+  font-size: 0.78rem;
+}
+
+.area-detail-empty button {
+  margin-top: 4px;
+  border: 0;
+  border-radius: 11px;
+  padding: 9px 14px;
+  color: white;
+  background: var(--color-purple);
+  cursor: pointer;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+@media (max-width: 680px) {
+  .area-detail-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .area-detail-header > button {
+    width: 100%;
+  }
+
+  .area-detail-mark {
+    width: 42px;
+    height: 42px;
+  }
+
+  .life-item {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .child-count {
+    display: none;
+  }
+}

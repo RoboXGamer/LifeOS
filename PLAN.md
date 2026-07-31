@@ -24,7 +24,15 @@ under the relevant task instead of silently changing scope.
       archive/restore, affected counts, and typed permanent deletion.
 - [x] Desktop and phone layouts manually inspected; the existing draft3 shell
       and navigation remain intact.
-- [ ] Milestone B / Phase 4 is the next implementation boundary.
+- [x] Milestone B / Phases 4–5 implemented against the development deployment.
+- [x] Title-only Inbox capture, typed Area organization, editing, completion,
+      nesting, family movement, archive/restore, and rejected-mutation rollback
+      verified in the browser.
+- [x] Route-aware inspector and global Inbox verified at desktop and phone
+      widths without changing the draft3 navigation shell.
+- [ ] Milestone C / Phases 6–8 is the next implementation boundary; the Area
+      detail foundation was pulled forward because it is required to exercise
+      direct Item creation.
 
 Implementation note: Better Auth's vanilla external session store is adapted to
 an explicit Solid-owned readiness signal and loading/error boundary. `<Loading>`
@@ -404,73 +412,73 @@ Milestone A is complete when all Phase 1–3 acceptance criteria pass.
 
 ### 4.1 Item server API
 
-- [ ] Implement bounded/indexed active Item queries by Workspace and Area.
-- [ ] Implement Item-by-ID query with ownership enforcement.
-- [ ] Create untyped Inbox Item with title only.
-- [ ] Create typed Item directly in an Area.
-- [ ] Update shared and type-specific fields.
-- [ ] Complete/reopen Tasks.
-- [ ] Move Item between Areas.
-- [ ] Move Item back to Inbox while preserving metadata.
-- [ ] Create and edit single-level children.
-- [ ] Move a parent family together.
-- [ ] Detach a child moved independently to Inbox.
-- [ ] Archive and restore Item families.
-- [ ] Enforce archived-Area visibility in all active queries.
+- [x] Implement bounded/indexed active Item queries by Workspace and Area.
+- [x] Implement Item-by-ID query with ownership enforcement.
+- [x] Create untyped Inbox Item with title only.
+- [x] Create typed Item directly in an Area.
+- [x] Update shared and type-specific fields.
+- [x] Complete/reopen Tasks.
+- [x] Move Item between Areas.
+- [x] Move Item back to Inbox while preserving metadata.
+- [x] Create and edit single-level children.
+- [x] Move a parent family together.
+- [x] Detach a child moved independently to Inbox.
+- [x] Archive and restore Item families.
+- [x] Enforce archived-Area visibility in all active queries.
 
 ### 4.2 Item optimistic store
 
-- [ ] Design stable keyed optimistic projections for list membership changes.
-- [ ] Handle create/update/move/archive/complete actions immediately.
-- [ ] Prevent duplicate optimistic records when Convex subscription catches up.
-- [ ] Preserve field edits when an Item moves between live lists.
-- [ ] Display targeted failure/retry state without losing typed form input.
+- [x] Design stable keyed optimistic projections for list membership changes.
+- [x] Handle create/update/move/archive/complete actions immediately.
+- [x] Prevent duplicate optimistic records when Convex subscription catches up.
+- [x] Preserve field edits when an Item moves between live lists.
+- [x] Display targeted failure/retry state without losing typed form input.
 
 ### 4.3 Inspector routing and responsive shell
 
-- [ ] Validate `item`, `mode`, and optional creation context in route search.
-- [ ] Build desktop right-side inspector.
-- [ ] Build mobile full-screen sheet using the same component/state.
-- [ ] Support view, create, edit, archived, and child-create modes.
-- [ ] Make browser Back close/restore inspector context.
-- [ ] Handle missing, deleted, unauthorized, and moved Items safely.
-- [ ] Add focus management, Escape behavior, focus return, and accessible labels.
+- [x] Validate `item`, `mode`, and optional creation context in route search.
+- [x] Build desktop right-side inspector.
+- [x] Build mobile full-screen sheet using the same component/state.
+- [x] Support view, create, edit, archived, and child-create modes.
+- [x] Make browser Back close/restore inspector context.
+- [x] Handle missing, deleted, unauthorized, and moved Items safely.
+- [x] Add focus management, Escape behavior, focus return, and accessible labels.
 
 ### 4.4 Item form
 
-- [ ] Title and optional type for Inbox capture/editing.
-- [ ] Require type before Area assignment.
-- [ ] Type-specific status/amount/settled fields.
-- [ ] Area, due date, priority, description, tags, and parent.
-- [ ] Preserve fields when changing type but clear invalid persisted fields on
+- [x] Title and optional type for Inbox capture/editing.
+- [x] Require type before Area assignment.
+- [x] Type-specific status/amount/settled fields.
+- [x] Area, due date, priority, description, tags, and parent.
+- [x] Preserve fields when changing type but clear invalid persisted fields on
       save with an understandable warning.
-- [ ] Provide archive/restore controls.
+- [x] Provide archive/restore controls.
 
 ## Phase 5 — Global Inbox and quick capture
 
-- [ ] Build the global slide-out panel without adding a sidebar destination.
-- [ ] Connect the existing Inbox sidebar button.
-- [ ] Query active `areaId: null` Items in the active Workspace.
-- [ ] Implement title-only quick capture with immediate optimistic insertion.
-- [ ] Add keyboard-friendly capture and sensible focus return.
-- [ ] Open an Inbox Item in the route-aware inspector over the current page.
-- [ ] Organize Item by type and Area.
-- [ ] Remove it from Inbox immediately after successful/optimistic assignment.
-- [ ] Support moving organized Items back to Inbox.
-- [ ] Add empty, reconnecting, failure, and retry states.
-- [ ] Ensure mobile overlay, safe-area, touch targets, and scroll locking feel
+- [x] Build the global slide-out panel without adding a sidebar destination.
+- [x] Connect the existing Inbox sidebar button.
+- [x] Query active `areaId: null` Items in the active Workspace.
+- [x] Implement title-only quick capture with immediate optimistic insertion.
+- [x] Add keyboard-friendly capture and sensible focus return.
+- [x] Open an Inbox Item in the route-aware inspector over the current page.
+- [x] Organize Item by type and Area.
+- [x] Remove it from Inbox immediately after successful/optimistic assignment.
+- [x] Support moving organized Items back to Inbox.
+- [x] Add empty, reconnecting, failure, and retry states.
+- [x] Ensure mobile overlay, safe-area, touch targets, and scroll locking feel
       intentional.
-- [ ] Add a gentle permanent-account prompt after meaningful anonymous usage;
+- [x] Add a gentle permanent-account prompt after meaningful anonymous usage;
       do not block capture.
 
 ### Milestone B verification
 
-- [ ] Capture, organize, edit, complete, move, nest, archive, and restore Items.
-- [ ] Verify parent-family movement rules.
-- [ ] Verify all optimistic rollback paths manually.
-- [ ] Verify browser navigation around the inspector.
-- [ ] Verify desktop/tablet/mobile interaction.
-- [ ] Run `pnpm run build` once and resolve every error.
+- [x] Capture, organize, edit, complete, move, nest, archive, and restore Items.
+- [x] Verify parent-family movement rules.
+- [x] Verify all optimistic rollback paths manually.
+- [x] Verify browser navigation around the inspector.
+- [x] Verify desktop/tablet/mobile interaction.
+- [x] Run `pnpm run build` once and resolve every error.
 
 ---
 
@@ -480,11 +488,11 @@ Milestone A is complete when all Phase 1–3 acceptance criteria pass.
 
 ### 6.1 Area detail
 
-- [ ] Build `/app/areas/$areaId`.
+- [x] Build `/app/areas/$areaId`.
 - [ ] List top-level Items and one child level.
 - [ ] Add type/status/priority/date affordances without visual clutter.
-- [ ] Support direct Item creation in the Area.
-- [ ] Reuse the inspector for every Item action.
+- [x] Support direct Item creation in the Area.
+- [x] Reuse the inspector for every Item action.
 
 ### 6.2 Today
 

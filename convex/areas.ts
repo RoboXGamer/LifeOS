@@ -41,6 +41,16 @@ export const listArchived = query({
   },
 });
 
+export const get = query({
+  args: { areaId: v.id("areas") },
+  handler: async (ctx, args) => {
+    const area = await ctx.db.get("areas", args.areaId);
+    if (!area) return null;
+    await requireWorkspaceOwner(ctx, area.workspaceId);
+    return area;
+  },
+});
+
 export const create = mutation({
   args: { workspaceId: v.id("workspaces"), ...areaFields },
   handler: async (ctx, args) => {
