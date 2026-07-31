@@ -30,9 +30,11 @@ under the relevant task instead of silently changing scope.
       verified in the browser.
 - [x] Route-aware inspector and global Inbox verified at desktop and phone
       widths without changing the draft3 navigation shell.
-- [ ] Milestone C / Phases 6–8 is the next implementation boundary; the Area
-      detail foundation was pulled forward because it is required to exercise
-      direct Item creation.
+- [x] Milestone C / Phases 6–8 implemented locally: daily retrieval, Area
+      calendar, Tags, global Search, Archive, and Settings now form the next
+      complete product slice.
+- [ ] Manual browser verification for Milestone C intentionally deferred at the
+      user's request; this checkpoint uses the production build as its gate.
 
 Implementation note: Better Auth's vanilla external session store is adapted to
 an explicit Solid-owned readiness signal and loading/error boundary. `<Loading>`
@@ -489,83 +491,89 @@ Milestone A is complete when all Phase 1–3 acceptance criteria pass.
 ### 6.1 Area detail
 
 - [x] Build `/app/areas/$areaId`.
-- [ ] List top-level Items and one child level.
-- [ ] Add type/status/priority/date affordances without visual clutter.
+- [x] List top-level Items and one child level.
+- [x] Add type/status/priority/date affordances without visual clutter.
 - [x] Support direct Item creation in the Area.
 - [x] Reuse the inspector for every Item action.
 
 ### 6.2 Today
 
-- [ ] Define client-local `YYYY-MM-DD` behavior explicitly.
-- [ ] Pass current date into Convex queries; do not read wall clock in queries.
-- [ ] Query incomplete Tasks due today with correct Workspace/Area/archive rules.
-- [ ] Complete/reopen optimistically.
-- [ ] Keep completed content discoverable without clutter.
+- [x] Define client-local `YYYY-MM-DD` behavior explicitly.
+- [x] Pass current date into Convex queries; do not read wall clock in queries.
+- [x] Query incomplete Tasks due today with correct Workspace/Area/archive rules.
+- [x] Complete/reopen optimistically.
+- [x] Keep completed content discoverable without clutter.
 
 ### 6.3 Upcoming
 
-- [ ] Query future dated Items with bounded pagination/order.
-- [ ] Group or label dates clearly.
-- [ ] Include relevant Tasks and Events without mixing semantics confusingly.
-- [ ] Reuse the inspector and optimistic actions.
+- [x] Query future dated Items with bounded pagination/order.
+- [x] Group or label dates clearly.
+- [x] Include relevant Tasks and Events without mixing semantics confusingly.
+- [x] Reuse the inspector and optimistic actions.
 
 ### 6.4 Area calendar
 
-- [ ] Build `/app/areas/$areaId/calendar`.
-- [ ] Show dated Items for the selected range.
-- [ ] Navigate between list and calendar without losing selected Area.
-- [ ] Create an Item prefilled with selected date through inspector routing.
-- [ ] Keep the initial calendar bounded and accessible; avoid external calendar
+- [x] Build `/app/areas/$areaId/calendar`.
+- [x] Show dated Items for the selected range.
+- [x] Navigate between list and calendar without losing selected Area.
+- [x] Create an Item prefilled with selected date through inspector routing.
+- [x] Keep the initial calendar bounded and accessible; avoid external calendar
       sync or scheduling complexity.
 
 ## Phase 7 — Tags and global Search
 
 ### 7.1 Tags
 
-- [ ] Create/reuse normalized Workspace Tag during Item save.
-- [ ] Maintain `itemTags` transactionally with Item changes.
-- [ ] Rename Tag and preserve relationships.
-- [ ] Delete unused Tag safely.
-- [ ] Query Tags and counts without unbounded document arrays.
-- [ ] Build `/app/tags` and tagged Item results.
+- [x] Create/reuse normalized Workspace Tag during Item save.
+- [x] Maintain `itemTags` transactionally with Item changes.
+- [x] Rename Tag and preserve relationships.
+- [x] Delete unused Tag safely.
+- [x] Query Tags and counts without unbounded document arrays.
+- [x] Build `/app/tags` and tagged Item results.
 
 ### 7.2 Search
 
-- [ ] Add appropriate Convex search index for Item title and filterable
+- [x] Add appropriate Convex search index for Item title and filterable
       Workspace/archive fields.
-- [ ] Decide the bounded search contract for description/type/tag/Area
+- [x] Decide the bounded search contract for description/type/tag/Area
       enrichment.
-- [ ] Debounce input without making results feel delayed.
-- [ ] Provide a global search trigger without changing sidebar navigation.
-- [ ] Support keyboard access and mobile presentation.
-- [ ] Open results in the shared inspector.
+- [x] Debounce input without making results feel delayed.
+- [x] Provide a global search trigger without changing sidebar navigation.
+- [x] Support keyboard access and mobile presentation.
+- [x] Open results in the shared inspector.
+
+Search contract: search active Item titles in the selected Workspace, return at
+most 40 matches, then enrich those bounded matches with type and Tag context.
+Area visibility is enforced after search so archived Areas cannot surface.
 
 ## Phase 8 — Archive and Settings
 
 ### 8.1 Archive
 
-- [ ] Build archived Item and Area sections.
-- [ ] Restore Items, families, Areas, and Workspaces safely.
-- [ ] Permanently delete individual archived Item after explicit confirmation.
-- [ ] Require typed name for parent-family, Area, or Workspace deletion.
-- [ ] Show affected counts before destructive deletion.
-- [ ] Ensure active data cannot be permanently deleted through these endpoints.
+- [x] Build archived Item and Area sections.
+- [x] Restore Items, families, Areas, and Workspaces safely.
+- [x] Permanently delete individual archived Item after explicit confirmation.
+- [x] Require typed name for parent-family, Area, or Workspace deletion.
+- [x] Show affected counts before destructive deletion.
+- [x] Ensure active data cannot be permanently deleted through these endpoints.
 
 ### 8.2 Settings
 
-- [ ] Account summary and anonymous/permanent status.
-- [ ] Username change form with validation and server cooldown.
-- [ ] Email/session/sign-out controls supplied safely by Better Auth.
-- [ ] Workspace management entry points.
-- [ ] No custom workflows, theme system, or unrelated configuration.
+- [x] Account summary and anonymous/permanent status.
+- [x] Username change form with validation and server cooldown.
+- [x] Email/session/sign-out controls supplied safely by Better Auth.
+- [x] Workspace management entry points.
+- [x] No custom workflows, theme system, or unrelated configuration.
 
 ### Milestone C verification
 
-- [ ] Confirm every view respects active Workspace and archive boundaries.
-- [ ] Confirm date behavior around local-day boundaries.
-- [ ] Confirm search/tag results cannot leak another Workspace.
-- [ ] Confirm destructive confirmation behavior.
-- [ ] Run `pnpm run build` once and resolve every error.
+- [x] Confirm every view respects active Workspace and archive boundaries by
+      endpoint ownership and filter inspection.
+- [ ] Confirm date behavior around local-day boundaries in the browser.
+- [x] Confirm search/tag results cannot leak another Workspace by endpoint
+      ownership and filter inspection.
+- [x] Confirm destructive confirmation behavior by endpoint and UI inspection.
+- [x] Run `pnpm run build` once and resolve every error.
 
 ---
 

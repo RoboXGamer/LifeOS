@@ -1,3 +1,4 @@
+import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
 import { requireProfile } from "./lib/auth";
@@ -125,6 +126,47 @@ export const current = query({
       isAnonymous: profile.isAnonymous,
       role: profile.role,
       activeWorkspaceId: profile.activeWorkspaceId ?? null,
+      usernameChangedAt: profile.usernameChangedAt ?? null,
     };
+  },
+});
+
+export const changeUsername = mutation({
+  args: { username: v.string() },
+  handler: async (ctx, args) => {
+    const profile = await requireProfile(ctx);
+    const username = args.username.trim().toLowerCase();
+    if (!/^[a-z0-9][a-z0-9_]{2,29}$/.test(username)) {
+      throw new Error(
+        "Username must be 3–30 lowercase letters, numbers, or _.",
+      );
+    }
+    const now = Date.now();
+    const cooldown = 7 * 24 * 60 * 60 * 1000;
+    if (
+      profile.usernameChangedAt &&
+      now - profile.usernameChangedAt < cooldown
+    ) {
+      const availableAt = new Date(
+        profile.usernameChangedAt + cooldown,
+      ).toISOString();
+      throw new Error(`Username can be changed again after ${availableAt}.`);
+    }
+    const existing = await ctx.db
+      .query("profiles")
+      .withIndex("by_normalizedUsername", (q) =>
+        q.eq("normalizedUsername", username),
+      )
+      .unique();
+    if (existing && existing._id !== profile._id) {
+      throw new Error("That username is already taken.");
+    }
+    await ctx.db.patch("profiles", profile._id, {
+      username,
+      normalizedUsername: username,
+      usernameChangedAt: now,
+      updatedAt: now,
+    });
+    return null;
   },
 });

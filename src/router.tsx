@@ -7,10 +7,15 @@ import {
 } from "@tanstack/solid-router";
 import App from "./App";
 import AreaDetail from "./pages/AreaDetail";
+import AreaCalendar from "./pages/AreaCalendar";
 import Areas from "./pages/Areas";
+import Archive from "./pages/Archive";
+import Settings from "./pages/Settings";
+import Tags from "./pages/Tags";
+import Today from "./pages/Today";
+import Upcoming from "./pages/Upcoming";
 import {
   NotFoundPage,
-  PlaceholderPage,
   RouteErrorPage,
 } from "./pages/Placeholder";
 
@@ -87,42 +92,42 @@ const areaCalendarRoute = createRoute({
   getParentRoute: () => appRoute,
   path: "/areas/$areaId/calendar",
   validateSearch: validateAppSearch,
-  component: () => <PlaceholderPage title="Area calendar" />,
+  component: AreaCalendar,
 });
 
 const todayRoute = createRoute({
   getParentRoute: () => appRoute,
   path: "/today",
   validateSearch: validateAppSearch,
-  component: () => <PlaceholderPage title="Today" />,
+  component: Today,
 });
 
 const upcomingRoute = createRoute({
   getParentRoute: () => appRoute,
   path: "/upcoming",
   validateSearch: validateAppSearch,
-  component: () => <PlaceholderPage title="Upcoming" />,
+  component: Upcoming,
 });
 
 const tagsRoute = createRoute({
   getParentRoute: () => appRoute,
   path: "/tags",
   validateSearch: validateAppSearch,
-  component: () => <PlaceholderPage title="Tags" />,
+  component: Tags,
 });
 
 const archiveRoute = createRoute({
   getParentRoute: () => appRoute,
   path: "/archive",
   validateSearch: validateAppSearch,
-  component: () => <PlaceholderPage title="Archive" />,
+  component: Archive,
 });
 
 const settingsRoute = createRoute({
   getParentRoute: () => appRoute,
   path: "/settings",
   validateSearch: validateAppSearch,
-  component: () => <PlaceholderPage title="Settings" />,
+  component: Settings,
 });
 
 const routeTree = rootRoute.addChildren([

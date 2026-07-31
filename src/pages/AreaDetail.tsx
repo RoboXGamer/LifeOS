@@ -66,6 +66,14 @@ export default function AreaDetail() {
           <Icon name="plus" size={18} />
           New Item
         </button>
+        <Link
+          class="area-calendar-link"
+          to="/app/areas/$areaId/calendar"
+          params={{ areaId: areaId() }}
+        >
+          <Icon name="calendar" size={17} />
+          Calendar
+        </Link>
       </header>
 
       <Show
@@ -145,6 +153,35 @@ export default function AreaDetail() {
                 >
                   <Icon name="more" size={18} />
                 </button>
+                <Show when={items.childrenOf(item()._id).length > 0}>
+                  <div class="life-item-children">
+                    <For
+                      each={items.childrenOf(item()._id)}
+                      keyed={(child) => child._id}
+                    >
+                      {(child) => (
+                        <button
+                          type="button"
+                          onClick={() => panel.openItem(child()._id)}
+                        >
+                          <Icon name={itemIcon(child().type)} size={15} />
+                          <span>
+                            <strong>{child().title}</strong>
+                            <small>
+                              {child().type ?? "Unsorted"}
+                              {child().priority
+                                ? ` · Priority ${child().priority}`
+                                : ""}
+                              {child().dueDate
+                                ? ` · ${dueDateLabel(child().dueDate)}`
+                                : ""}
+                            </small>
+                          </span>
+                        </button>
+                      )}
+                    </For>
+                  </div>
+                </Show>
               </article>
             )}
           </For>

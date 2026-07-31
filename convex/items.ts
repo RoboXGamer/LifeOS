@@ -247,6 +247,123 @@ export const listByArea = query({
   },
 });
 
+export const listToday = query({
+  args: { workspaceId: v.id("workspaces"), date: v.string() },
+  handler: async (ctx, args) => {
+    await requireWorkspaceOwner(ctx, args.workspaceId);
+    const date = cleanDueDate(args.date);
+    if (!date) return [];
+    const [items, areaIds] = await Promise.all([
+      ctx.db
+        .query("items")
+        .withIndex("by_workspaceId_and_dueDate", (q) =>
+          q.eq("workspaceId", args.workspaceId).eq("dueDate", date),
+        )
+        .take(300),
+      visibleAreaIds(ctx, args.workspaceId),
+    ]);
+    const visible = items.filter(
+      (item) =>
+        !item.archived &&
+        item.type === "Task" &&
+        (item.areaId === null || areaIds.has(item.areaId)),
+    );
+    return await Promise.all(visible.map((item) => itemWithTags(ctx, item)));
+  },
+});
+
+export const listUpcoming = query({
+  args: {
+    workspaceId: v.id("workspaces"),
+    afterDate: v.string(),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    await requireWorkspaceOwner(ctx, args.workspaceId);
+    const afterDate = cleanDueDate(args.afterDate);
+    if (!afterDate) return [];
+    const limit = Math.max(1, Math.min(Math.floor(args.limit ?? 150), 200));
+    const [items, areaIds] = await Promise.all([
+      ctx.db
+        .query("items")
+        .withIndex("by_workspaceId_and_dueDate", (q) =>
+          q.eq("workspaceId", args.workspaceId).gt("dueDate", afterDate),
+        )
+        .take(limit),
+      visibleAreaIds(ctx, args.workspaceId),
+    ]);
+    const visible = items.filter(
+      (item) =>
+        !item.archived &&
+        (item.type === "Task" || item.type === "Event") &&
+        (item.areaId === null || areaIds.has(item.areaId)),
+    );
+    return await Promise.all(visible.map((item) => itemWithTags(ctx, item)));
+  },
+});
+
+export const listAreaRange = query({
+  args: {
+    areaId: v.id("areas"),
+    fromDate: v.string(),
+    toDate: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { area } = await requireAreaOwner(ctx, args.areaId);
+    if (area.archived) return [];
+    const fromDate = cleanDueDate(args.fromDate);
+    const toDate = cleanDueDate(args.toDate);
+    if (!fromDate || !toDate || fromDate > toDate) {
+      throw new Error("Choose a valid calendar range.");
+    }
+    const items = await ctx.db
+      .query("items")
+      .withIndex("by_areaId_and_dueDate", (q) =>
+        q
+          .eq("areaId", area._id)
+          .gte("dueDate", fromDate)
+          .lte("dueDate", toDate),
+      )
+      .take(200);
+    return await Promise.all(
+      items
+        .filter((item) => !item.archived)
+        .map((item) => itemWithTags(ctx, item)),
+    );
+  },
+});
+
+export const search = query({
+  args: {
+    workspaceId: v.id("workspaces"),
+    searchTerm: v.string(),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    await requireWorkspaceOwner(ctx, args.workspaceId);
+    const searchTerm = args.searchTerm.trim();
+    if (!searchTerm) return [];
+    const limit = Math.max(1, Math.min(Math.floor(args.limit ?? 40), 60));
+    const [items, areaIds] = await Promise.all([
+      ctx.db
+        .query("items")
+        .withSearchIndex("search_title", (q) =>
+          q
+            .search("title", searchTerm)
+            .eq("workspaceId", args.workspaceId)
+            .eq("archived", false),
+        )
+        .take(limit),
+      visibleAreaIds(ctx, args.workspaceId),
+    ]);
+    return await Promise.all(
+      items
+        .filter((item) => item.areaId === null || areaIds.has(item.areaId))
+        .map((item) => itemWithTags(ctx, item)),
+    );
+  },
+});
+
 export const get = query({
   args: { itemId: v.id("items") },
   handler: async (ctx, args) => {
@@ -380,6 +497,43 @@ export const setArchived = mutation({
         archived: args.archived,
         updatedAt: now,
       });
+    }
+    return null;
+  },
+});
+
+export const removalImpact = query({
+  args: { itemId: v.id("items") },
+  handler: async (ctx, args) => {
+    const { item } = await requireItemOwner(ctx, args.itemId);
+    const { root, children } = await family(ctx, item);
+    return {
+      rootId: root._id,
+      rootTitle: root.title,
+      itemCount: 1 + children.length,
+    };
+  },
+});
+
+export const remove = mutation({
+  args: { itemId: v.id("items"), confirmation: v.string() },
+  handler: async (ctx, args) => {
+    const { item } = await requireItemOwner(ctx, args.itemId);
+    const { root, children } = await family(ctx, item);
+    const members = [root, ...children];
+    if (members.some((member) => !member.archived)) {
+      throw new Error("Archive this Item family before deleting it.");
+    }
+    if (args.confirmation.trim() !== root.title) {
+      throw new Error("Type the parent Item title exactly to confirm deletion.");
+    }
+    for (const member of members) {
+      const links = await ctx.db
+        .query("itemTags")
+        .withIndex("by_itemId", (q) => q.eq("itemId", member._id))
+        .take(100);
+      for (const link of links) await ctx.db.delete("itemTags", link._id);
+      await ctx.db.delete("items", member._id);
     }
     return null;
   },

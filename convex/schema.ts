@@ -83,7 +83,12 @@ export default defineSchema({
     .index("by_workspaceId_and_archived", ["workspaceId", "archived"])
     .index("by_areaId_and_archived", ["areaId", "archived"])
     .index("by_parentId", ["parentId"])
-    .index("by_workspaceId_and_dueDate", ["workspaceId", "dueDate"]),
+    .index("by_workspaceId_and_dueDate", ["workspaceId", "dueDate"])
+    .index("by_areaId_and_dueDate", ["areaId", "dueDate"])
+    .searchIndex("search_title", {
+      searchField: "title",
+      filterFields: ["workspaceId", "archived"],
+    }),
 
   tags: defineTable({
     workspaceId: v.id("workspaces"),

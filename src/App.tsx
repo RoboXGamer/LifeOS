@@ -7,6 +7,7 @@ import { WorkspaceMenu } from "./features/workspaces/WorkspaceMenu";
 import { ItemProvider } from "./features/items/context";
 import { InboxPanel } from "./features/items/InboxPanel";
 import { ItemInspector } from "./features/items/ItemInspector";
+import { SearchPanel } from "./features/items/SearchPanel";
 
 const navItems = [
   { id: "areas", label: "Areas", icon: "grid" },
@@ -28,6 +29,7 @@ function App() {
 
 function AppShell() {
   const [inboxOpen, toggleInbox] = createSignal(false);
+  const [searchOpen, setSearchOpen] = createSignal(false);
   const location = useLocation();
   const closeInbox = (returnFocus = true) => {
     toggleInbox(false);
@@ -38,6 +40,14 @@ function AppShell() {
           ?.focus(),
       );
     }
+  };
+  const closeSearch = () => {
+    setSearchOpen(false);
+    queueMicrotask(() =>
+      document
+        .querySelector<HTMLButtonElement>(".global-search-trigger")
+        ?.focus(),
+    );
   };
 
   createEffect(inboxOpen, (open) => {
@@ -54,6 +64,16 @@ function AppShell() {
         event.preventDefault();
         toggleInbox(true);
       }
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setSearchOpen(true);
+        queueMicrotask(() =>
+          document
+            .querySelector<HTMLInputElement>("#global-search-input")
+            ?.focus(),
+        );
+      }
+      if (event.key === "Escape" && searchOpen()) closeSearch();
     };
     window.addEventListener("keydown", openInbox);
     return () => window.removeEventListener("keydown", openInbox);
@@ -96,6 +116,22 @@ function AppShell() {
           <WorkspaceMenu />
         </aside>
         <main class="main">
+          <button
+            type="button"
+            class="global-search-trigger"
+            aria-label="Search Items"
+            title="Search Items (Ctrl/⌘ K)"
+            onClick={() => {
+              setSearchOpen(true);
+              queueMicrotask(() =>
+                document
+                  .querySelector<HTMLInputElement>("#global-search-input")
+                  ?.focus(),
+              );
+            }}
+          >
+            <Icon name="search" size={18} />
+          </button>
           <Outlet />
         </main>
         <div class="overlay-layer">
@@ -106,6 +142,13 @@ function AppShell() {
             <InboxPanel onClose={closeInbox} />
           </div>
           <ItemInspector />
+          <div
+            class={["search-host", { open: searchOpen() }]}
+            aria-hidden={searchOpen() ? "false" : "true"}
+            onClick={closeSearch}
+          >
+            <SearchPanel onClose={closeSearch} />
+          </div>
         </div>
       </div>
     </>
