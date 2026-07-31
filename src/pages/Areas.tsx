@@ -55,10 +55,6 @@ export default function Areas() {
   const panel = useItemPanelRoute();
   const [view, setView] = createSignal<"grid" | "list">("grid");
   const [editor, setEditor] = createSignal<Doc<"areas"> | "new" | null>(null);
-  const [archiveOpen, setArchiveOpen] = createSignal(false);
-  const [deleteTarget, setDeleteTarget] = createSignal<Doc<"areas"> | null>(
-    null,
-  );
   const [error, setError] = createSignal<string | null>(null);
 
   const activeWorkspaceId = () => workspaces.state.activeWorkspaceId;
@@ -70,23 +66,6 @@ export default function Areas() {
     },
     { initialValue: [] },
   );
-  const archivedSource = createQuery(
-    api.areas.listArchived,
-    () => {
-      const workspaceId = activeWorkspaceId();
-      return workspaceId ? { workspaceId } : "skip";
-    },
-    { initialValue: [] },
-  );
-  const deleteImpact = createQuery(
-    api.areas.removalImpact,
-    () => {
-      const area = deleteTarget();
-      return area ? { areaId: area._id } : "skip";
-    },
-    { initialValue: undefined },
-  );
-
   const [areas, setAreas] = createOptimisticStore<Doc<"areas">[]>(
     () => areaSource() ?? [],
     [],
@@ -95,7 +74,6 @@ export default function Areas() {
   const createAreaMutation = createMutation(api.areas.create);
   const updateAreaMutation = createMutation(api.areas.update);
   const archiveAreaMutation = createMutation(api.areas.setArchived);
-  const removeAreaMutation = createMutation(api.areas.remove);
 
   const recordFailure = (reason: unknown) => setError(toError(reason).message);
 
@@ -149,28 +127,6 @@ export default function Areas() {
     }
   });
 
-  const restoreArea = action(function* (areaId: Id<"areas">) {
-    setError(null);
-    try {
-      yield archiveAreaMutation({ areaId, archived: false });
-    } catch (reason) {
-      recordFailure(reason);
-    }
-  });
-
-  const deleteArea = action(function* (
-    area: Doc<"areas">,
-    confirmation: string,
-  ) {
-    setError(null);
-    try {
-      yield removeAreaMutation({ areaId: area._id, confirmation });
-      setDeleteTarget(null);
-    } catch (reason) {
-      recordFailure(reason);
-    }
-  });
-
   const saveArea = (input: AreaInput) => {
     const current = editor();
     if (current === "new") createArea(input);
@@ -204,36 +160,28 @@ export default function Areas() {
   return (
     <section class="areas-page">
       <header class="areas-header">
-        <div>
-          <div class="area-view-toggle" aria-label="Area view">
+        <h2>Areas</h2>
+        <div class="areas-header-actions">
+          <div class="area-view-toggle" role="group" aria-label="Area view">
             <button
+              type="button"
               class={{ active: view() === "grid" }}
               aria-label="Grid view"
+              title="Grid view"
               onClick={() => setView("grid")}
             >
               <Icon name="grid" size={16} />
             </button>
             <button
+              type="button"
               class={{ active: view() === "list" }}
               aria-label="List view"
+              title="List view"
               onClick={() => setView("list")}
             >
               <Icon name="list" size={16} />
             </button>
           </div>
-          <span>{workspaces.activeWorkspace()?.name ?? "My Life"}</span>
-          <h2>Areas</h2>
-          <p>The parts of life you want to keep intentionally in view.</p>
-        </div>
-        <div>
-          <button
-            type="button"
-            class="secondary-action"
-            onClick={() => setArchiveOpen(true)}
-          >
-            <Icon name="archive" size={17} />
-            Archived
-          </button>
           <button
             type="button"
             class="primary-action"
@@ -307,37 +255,21 @@ export default function Areas() {
                       to="/app/areas/$areaId"
                       params={{ areaId: area()._id }}
                       aria-label={`Open ${area().name}`}
-                    >
-                      <div class="deco">
-                        <div class="deco-blobs">
-                          <span class="shape shape-a" />
-                          <span class="shape shape-b" />
-                        </div>
-                        <Icon
-                          name={area().icon as IconName}
-                          size={40}
-                          strokeWidth={1.3}
-                        />
+                    />
+                    <div class="deco">
+                      <div class="deco-blobs">
+                        <span class="shape shape-a" />
+                        <span class="shape shape-b" />
                       </div>
-                    </Link>
+                      <Icon
+                        name={area().icon as IconName}
+                        size={40}
+                        strokeWidth={1.3}
+                      />
+                    </div>
                     <div class="area-title">
                       <Icon name={area().icon as IconName} />
-                      <div>
-                        <h3>{area().name}</h3>
-                        <small>
-                          {
-                            items.activeItems.filter(
-                              (item) =>
-                                item.areaId === area()._id &&
-                                item.parentId === null,
-                            ).length
-                          }{" "}
-                          Items
-                        </small>
-                        <Show when={area().description}>
-                          <p>{area().description}</p>
-                        </Show>
-                      </div>
+                      <h3>{area().name}</h3>
                       <div class="area-actions">
                         <button
                           type="button"
@@ -369,26 +301,6 @@ export default function Areas() {
             area={value === "new" ? null : (value as Doc<"areas">)}
             onClose={() => setEditor(null)}
             onSave={saveArea}
-          />
-        )}
-      </Show>
-
-      <Show when={archiveOpen()}>
-        <ArchivedAreas
-          areas={() => archivedSource() ?? []}
-          onClose={() => setArchiveOpen(false)}
-          onRestore={restoreArea}
-          onDelete={(area) => setDeleteTarget({ ...area })}
-        />
-      </Show>
-
-      <Show when={deleteTarget()} keyed>
-        {(area) => (
-          <DeleteAreaDialog
-            area={area}
-            itemCount={deleteImpact()?.itemCount}
-            onClose={() => setDeleteTarget(null)}
-            onConfirm={(confirmation) => deleteArea(area, confirmation)}
           />
         )}
       </Show>
@@ -522,119 +434,6 @@ function AreaEditor(props: {
             </button>
             <button type="submit" class="primary-action">
               {props.area ? "Save changes" : "Create Area"}
-            </button>
-          </footer>
-        </form>
-      </section>
-    </div>
-  );
-}
-
-function ArchivedAreas(props: {
-  areas: () => Doc<"areas">[];
-  onClose: () => void;
-  onRestore: (areaId: Id<"areas">) => void;
-  onDelete: (area: Doc<"areas">) => void;
-}) {
-  return (
-    <div
-      class="dialog-backdrop"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) props.onClose();
-      }}
-    >
-      <section
-        class="area-dialog archive-dialog"
-        role="dialog"
-        aria-modal="true"
-      >
-        <header>
-          <div>
-            <span>
-              <Icon name="archive" size={18} />
-            </span>
-            <div>
-              <h3>Archived Areas</h3>
-              <p>Restore an Area or remove it permanently.</p>
-            </div>
-          </div>
-          <button type="button" aria-label="Close" onClick={props.onClose}>
-            <Icon name="close" size={18} />
-          </button>
-        </header>
-        <div class="archived-area-list">
-          <For
-            each={props.areas()}
-            fallback={<p class="archive-empty">No archived Areas.</p>}
-          >
-            {(area) => (
-              <article>
-                <span style={{ background: area.color }}>
-                  <Icon name={area.icon as IconName} size={17} />
-                </span>
-                <strong>{area.name}</strong>
-                <button type="button" onClick={() => props.onRestore(area._id)}>
-                  Restore
-                </button>
-                <button
-                  type="button"
-                  class="danger"
-                  onClick={() => props.onDelete(area)}
-                >
-                  Delete
-                </button>
-              </article>
-            )}
-          </For>
-        </div>
-      </section>
-    </div>
-  );
-}
-
-function DeleteAreaDialog(props: {
-  area: Doc<"areas">;
-  itemCount?: number;
-  onClose: () => void;
-  onConfirm: (confirmation: string) => void;
-}) {
-  const submit = (event: SubmitEvent) => {
-    event.preventDefault();
-    const confirmation =
-      new FormData(event.currentTarget as HTMLFormElement)
-        .get("confirmation")
-        ?.toString() ?? "";
-    props.onConfirm(confirmation);
-  };
-  return (
-    <div class="dialog-backdrop destructive-backdrop">
-      <section
-        class="area-dialog delete-dialog"
-        role="alertdialog"
-        aria-modal="true"
-      >
-        <header>
-          <div>
-            <span>
-              <Icon name="trash" size={18} />
-            </span>
-            <div>
-              <h3>Delete {props.area.name}?</h3>
-              <p>This permanently deletes {props.itemCount ?? "its"} Items.</p>
-            </div>
-          </div>
-        </header>
-        <form onSubmit={submit}>
-          <label>
-            <span>Type “{props.area.name}” to confirm</span>
-            <input name="confirmation" autocomplete="off" autofocus required />
-          </label>
-          <footer>
-            <button type="button" onClick={props.onClose}>
-              Cancel
-            </button>
-            <button type="submit" class="danger-action">
-              Delete permanently
             </button>
           </footer>
         </form>

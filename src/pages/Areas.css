@@ -7,23 +7,10 @@
 
 .areas-header {
   display: flex;
-  align-items: end;
+  align-items: center;
   justify-content: space-between;
   gap: 20px;
-  padding: 4px 8px 10px;
-}
-
-.areas-header > div:first-child {
-  display: grid;
-  gap: 4px;
-}
-
-.areas-header > div:first-child > span {
-  color: var(--color-purple);
-  font-size: 0.7rem;
-  font-weight: 750;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  padding: 4px 8px 14px;
 }
 
 .areas-header h2 {
@@ -31,39 +18,45 @@
   letter-spacing: -0.04em;
 }
 
-.areas-header p {
-  color: hsl(225 14% 45%);
-  font-size: 0.82rem;
-}
-
-.areas-header > div:last-child {
+.areas-header-actions {
   display: flex;
+  align-items: center;
   gap: 8px;
 }
 
 .area-view-toggle {
   display: flex;
-  gap: 2px;
-  padding: 3px;
-  border-radius: 10px;
-  background: hsl(228 35% 95%);
+  gap: 3px;
+  padding: 4px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: white;
+  box-shadow: 0 5px 15px rgb(31 36 68 / 6%);
 }
 .area-view-toggle button {
-  width: 34px;
-  min-height: 34px !important;
+  width: 32px;
+  min-height: 32px !important;
   display: grid;
   place-items: center;
   border: 0;
-  border-radius: 8px;
+  border-radius: 9px;
   padding: 0;
-  color: hsl(225 12% 47%);
+  color: hsl(225 12% 43%);
   background: transparent;
   cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.area-view-toggle button:hover:not(.active) {
+  color: var(--color-purple);
+  background: hsl(248 65% 97%);
 }
 .area-view-toggle button.active {
-  color: var(--color-purple);
-  background: white;
-  box-shadow: 0 3px 9px rgb(31 36 68 / 8%);
+  color: white;
+  background: var(--color-purple);
+  box-shadow: 0 4px 10px rgb(90 69 229 / 24%);
 }
 
 .primary-action,
@@ -111,6 +104,7 @@
 .area-item {
   --_deco-color: var(--color-purple);
 
+  position: relative;
   transition: translate 0.2s ease;
   min-height: var(--card-height);
   border-radius: 16px;
@@ -190,33 +184,22 @@
   }
 }
 
-.area-item:is(:hover, :focus-visible) {
+.area-item:is(:hover, :focus-within) {
   translate: 0 -4px;
 }
 
 .area-card-link {
-  display: grid;
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  border-radius: inherit;
   color: inherit;
   text-decoration: none;
 }
 
-.area-title > div:nth-child(2) {
-  min-width: 0;
-  display: grid;
-  gap: 2px;
-}
-
-.area-title p {
-  overflow: hidden;
-  color: hsl(225 12% 48%);
-  font-size: 0.68rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.area-title small {
-  color: hsl(225 12% 50%);
-  font-size: 0.58rem;
+.area-card-link:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--_deco-color) 45%, transparent);
+  outline-offset: 3px;
 }
 
 .areas-grid.view-list {
@@ -244,6 +227,8 @@
 }
 
 .area-actions {
+  position: relative;
+  z-index: 2;
   display: flex;
   gap: 2px;
   margin-left: auto;
@@ -648,10 +633,12 @@
     flex-direction: column;
   }
 
-  .areas-header > div:last-child,
-  .areas-header > div:last-child button {
-    flex: 1;
+  .areas-header-actions {
     width: 100%;
+  }
+
+  .areas-header-actions > .primary-action {
+    flex: 1;
   }
 
   .areas-grid {
