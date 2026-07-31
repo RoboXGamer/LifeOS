@@ -128,10 +128,9 @@ export default function AreaDetail() {
 
     return (
       <div
-        class="area-table-row"
-        classList={{ "is-child": !!options.parentTitle }}
+        class={["area-table-row", { "is-child": !!options.parentTitle }]}
         role="button"
-        tabIndex={0}
+        tabindex={0}
         onClick={() => open(item._id)}
         onKeyDown={(event) => {
           if (event.key === "Enter" || event.key === " ") {
@@ -152,7 +151,7 @@ export default function AreaDetail() {
               class="family-toggle"
               type="button"
               aria-label={`Toggle children for ${item.title}`}
-              aria-expanded={expanded().has(item._id)}
+              aria-expanded={expanded().has(item._id) ? "true" : "false"}
               onClick={(event) => {
                 event.stopPropagation();
                 toggleExpanded(item._id);
@@ -174,8 +173,7 @@ export default function AreaDetail() {
           >
             <button
               type="button"
-              class="area-row-check"
-              classList={{ checked: item.status === "Done" }}
+              class={["area-row-check", { checked: item.status === "Done" }]}
               aria-label={
                 item.status === "Done"
                   ? "Mark task incomplete"
@@ -190,7 +188,7 @@ export default function AreaDetail() {
             </button>
           </Show>
           <span class="area-row-title-copy">
-            <strong classList={{ completed: item.status === "Done" }}>
+            <strong class={{ completed: item.status === "Done" }}>
               {item.title}
             </strong>
             <span class="area-row-mobile-meta">
@@ -212,8 +210,10 @@ export default function AreaDetail() {
         </span>
         <button
           type="button"
-          class="area-col-priority area-priority-button"
-          classList={{ active: !!item.priority }}
+          class={[
+            "area-col-priority area-priority-button",
+            { active: !!item.priority },
+          ]}
           aria-label={`Change priority for ${item.title}`}
           onClick={(event) => {
             event.stopPropagation();
