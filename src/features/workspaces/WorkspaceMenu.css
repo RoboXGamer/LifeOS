@@ -312,7 +312,7 @@
   .workspace-popover {
     position: fixed;
     right: 12px;
-    bottom: 12px;
+    bottom: 80px;
     left: 12px;
     width: auto;
   }

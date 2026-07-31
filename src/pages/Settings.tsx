@@ -2,16 +2,19 @@ import { createSignal, For, Show } from "solid-js";
 import { api } from "../../convex/_generated/api";
 import { authClient } from "../auth/client";
 import { createMutation, createQuery, toError } from "../convex";
+import { useItems } from "../features/items/context";
 import { useWorkspaces } from "../features/workspaces/context";
 import "./Lifecycle.css";
 import "./Organization.css";
 
 export default function Settings() {
   const workspaces = useWorkspaces();
+  const items = useItems();
   const profile = createQuery(api.profiles.current, {}, {});
   const changeUsername = createMutation(api.profiles.changeUsername);
   const [username, setUsername] = createSignal("");
   const [workspaceName, setWorkspaceName] = createSignal("");
+  const [renamedWorkspace, setRenamedWorkspace] = createSignal("");
   const [message, setMessage] = createSignal<string | null>(null);
   const saveUsername = async () => {
     try {
@@ -48,6 +51,30 @@ export default function Settings() {
     workspaces.createWorkspace(workspaceName());
     setWorkspaceName("");
   };
+  const renameWorkspace = () => {
+    const workspace = workspaces.activeWorkspace();
+    const name = renamedWorkspace().trim();
+    if (!workspace || !name) return;
+    workspaces.renameWorkspace(workspace.id, name);
+    setRenamedWorkspace("");
+    setMessage("Workspace renamed.");
+  };
+  const completedTasks = () =>
+    items.activeItems.filter(
+      (item) =>
+        item.type === "Task" &&
+        item.status === "Done" &&
+        item.parentId === null,
+    );
+  const archiveCompleted = async () => {
+    const targets = [...completedTasks()];
+    for (const item of targets) await items.setArchived(item._id, true);
+    setMessage(
+      targets.length
+        ? `Archived ${targets.length} completed Task${targets.length === 1 ? "" : "s"}.`
+        : "No completed Tasks to archive.",
+    );
+  };
   const signOut = async () => {
     const result = await authClient.signOut();
     if (result.error) setMessage(result.error.message ?? "Sign out failed.");
@@ -66,7 +93,9 @@ export default function Settings() {
       <div class="settings-grid">
         <article class="settings-card">
           <span>Profile</span>
-          <h3>{profile()?.username ? `@${profile()?.username}` : "Anonymous"}</h3>
+          <h3>
+            {profile()?.username ? `@${profile()?.username}` : "Anonymous"}
+          </h3>
           <p>
             {profile()?.isAnonymous
               ? "You can use Life OS immediately. Sign-up can make this data permanent later."
@@ -103,6 +132,31 @@ export default function Settings() {
         <article class="settings-card">
           <span>Workspaces</span>
           <h3>Manage separate spaces</h3>
+          <p>
+            {items.areas().length} active Areas and {items.activeItems.length}{" "}
+            active Items in this Workspace.
+          </p>
+          <form
+            class="settings-form"
+            onSubmit={(event) => {
+              event.preventDefault();
+              renameWorkspace();
+            }}
+          >
+            <input
+              value={renamedWorkspace()}
+              placeholder={
+                workspaces.activeWorkspace()?.name ?? "Workspace name"
+              }
+              maxlength="80"
+              onInput={(event) =>
+                setRenamedWorkspace(event.currentTarget.value)
+              }
+            />
+            <button type="submit" disabled={!renamedWorkspace().trim()}>
+              Rename
+            </button>
+          </form>
           <div class="workspace-settings-list">
             <For each={workspaces.state.workspaces} keyed={(space) => space.id}>
               {(space) => (
@@ -137,7 +191,24 @@ export default function Settings() {
             />
             <button type="submit">Create</button>
           </form>
-          <p>Rename and archive controls remain in the avatar menu.</p>
+          <p>Archive and restore controls remain in the Workspace menu.</p>
+        </article>
+        <article class="settings-card">
+          <span>Maintenance</span>
+          <h3>Archive completed Tasks</h3>
+          <p>
+            Move completed top-level Tasks and their children out of active
+            views without deleting them.
+          </p>
+          <button
+            type="button"
+            disabled={completedTasks().length === 0}
+            onClick={() => void archiveCompleted()}
+          >
+            {completedTasks().length
+              ? `Archive ${completedTasks().length} completed Task${completedTasks().length === 1 ? "" : "s"}`
+              : "No completed Tasks"}
+          </button>
         </article>
         <article class="settings-card">
           <span>Session</span>
@@ -151,8 +222,8 @@ export default function Settings() {
             when={!profile()?.isAnonymous}
             fallback={
               <p>
-                Sign-out is hidden here because an anonymous space cannot yet
-                be recovered. Make it permanent before leaving it.
+                Sign-out is hidden here because an anonymous space cannot yet be
+                recovered. Make it permanent before leaving it.
               </p>
             }
           >

@@ -23,7 +23,7 @@ import "./ItemInspector.css";
 
 const statuses: ItemStatus[] = ["Todo", "In Progress", "Done"];
 
-export function ItemInspector() {
+export function ItemInspector(props: { docked: boolean }) {
   const items = useItems();
   const panel = useItemPanelRoute();
   const visible = () =>
@@ -75,8 +75,8 @@ export function ItemInspector() {
       >
         <aside
           class="item-inspector"
-          role="dialog"
-          aria-modal="true"
+          role={props.docked ? "complementary" : "dialog"}
+          aria-modal={props.docked ? undefined : "true"}
           aria-label={mode() === "create" ? "Create Item" : "Item details"}
         >
           <Show

@@ -42,7 +42,7 @@ const areaColors = [
   "#d06736",
 ];
 
-interface AreaInput {
+export interface AreaInput {
   name: string;
   description?: string;
   icon: string;
@@ -308,7 +308,7 @@ export default function Areas() {
   );
 }
 
-function AreaEditor(props: {
+export function AreaEditor(props: {
   area: Doc<"areas"> | null;
   onClose: () => void;
   onSave: (input: AreaInput) => void;

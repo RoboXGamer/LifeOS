@@ -8,6 +8,8 @@ import { trapTabKey } from "./focus";
 import "./InboxPanel.css";
 
 export function InboxPanel(props: {
+  open: boolean;
+  docked: boolean;
   onClose: (returnFocus?: boolean) => void;
 }) {
   const items = useItems();
@@ -19,7 +21,7 @@ export function InboxPanel(props: {
 
   onSettled(() => {
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") props.onClose();
+      if (event.key === "Escape" && props.open) props.onClose();
     };
     window.addEventListener("keydown", closeOnEscape);
     return () => window.removeEventListener("keydown", closeOnEscape);
@@ -44,10 +46,16 @@ export function InboxPanel(props: {
     >
       <aside
         class="inbox-panel"
-        role="dialog"
-        aria-modal="true"
+        role={
+          props.open ? (props.docked ? "complementary" : "dialog") : undefined
+        }
+        aria-modal={props.open && !props.docked ? "true" : undefined}
+        aria-hidden={props.open ? undefined : "true"}
+        inert={!props.open}
         aria-label="Inbox"
-        onKeyDown={trapTabKey}
+        onKeyDown={(event) => {
+          if (!props.docked) trapTabKey(event);
+        }}
       >
         <header>
           <div>

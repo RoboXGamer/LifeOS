@@ -8,7 +8,9 @@ import { ItemProvider } from "./features/items/context";
 import { InboxPanel } from "./features/items/InboxPanel";
 import { ItemInspector } from "./features/items/ItemInspector";
 import { SearchPanel } from "./features/items/SearchPanel";
+import { useItemPanelRoute } from "./features/items/routing";
 import { AuthProvider } from "./auth/context";
+import type { AppRouteSearch } from "./router";
 
 const navItems = [
   { id: "areas", label: "Areas", icon: "grid" },
@@ -31,9 +33,20 @@ function App() {
 }
 
 function AppShell() {
-  const [inboxOpen, toggleInbox] = createSignal(false);
+  const desktopMedia = window.matchMedia("(min-width: 1181px)");
+  const [desktopShell, setDesktopShell] = createSignal(desktopMedia.matches);
+  const desktopInboxOpen =
+    desktopMedia.matches &&
+    localStorage.getItem("life-os-inbox-collapsed") !== "true";
+  const [inboxOpen, toggleInbox] = createSignal(desktopInboxOpen);
   const [searchOpen, setSearchOpen] = createSignal(false);
   const location = useLocation();
+  const itemPanel = useItemPanelRoute();
+  const inspectorOpen = () => !!(location().search as AppRouteSearch).mode;
+  const navActive = (id: (typeof navItems)[number]["id"]) =>
+    id === "areas"
+      ? location().pathname.startsWith("/app/areas")
+      : location().pathname === `/app/${id}`;
   const closeInbox = (returnFocus = true) => {
     toggleInbox(false);
     if (returnFocus) {
@@ -47,13 +60,35 @@ function AppShell() {
   const closeSearch = () => {
     setSearchOpen(false);
     queueMicrotask(() =>
-      document
-        .querySelector<HTMLButtonElement>(".global-search-trigger")
-        ?.focus(),
+      document.querySelector<HTMLButtonElement>(".global-search-nav")?.focus(),
     );
+  };
+  const openSearch = () => {
+    if (window.matchMedia("(max-width: 1180px)").matches) closeInbox(false);
+    setSearchOpen(true);
+    queueMicrotask(() =>
+      document.querySelector<HTMLInputElement>("#global-search-input")?.focus(),
+    );
+  };
+  const toggleInboxPanel = () => {
+    const open = !inboxOpen();
+    if (
+      open &&
+      inspectorOpen() &&
+      window.matchMedia("(max-width: 1180px)").matches
+    ) {
+      itemPanel.close();
+    }
+    toggleInbox(open);
+  };
+  const closeInboxForNavigation = () => {
+    if (!desktopShell()) closeInbox(false);
   };
 
   createEffect(inboxOpen, (open) => {
+    if (desktopShell()) {
+      localStorage.setItem("life-os-inbox-collapsed", String(!open));
+    }
     if (open) {
       queueMicrotask(() =>
         document.querySelector<HTMLInputElement>("#quick-capture")?.focus(),
@@ -61,30 +96,43 @@ function AppShell() {
     }
   });
 
+  createEffect(inspectorOpen, (open) => {
+    if (open && window.matchMedia("(max-width: 1180px)").matches) {
+      closeInbox(false);
+    }
+  });
+
   onSettled(() => {
     const openInbox = (event: KeyboardEvent) => {
       if ((event.ctrlKey || event.metaKey) && event.code === "Space") {
         event.preventDefault();
-        toggleInbox(true);
+        if (!inboxOpen()) toggleInboxPanel();
       }
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
-        setSearchOpen(true);
-        queueMicrotask(() =>
-          document
-            .querySelector<HTMLInputElement>("#global-search-input")
-            ?.focus(),
-        );
+        openSearch();
       }
       if (event.key === "Escape" && searchOpen()) closeSearch();
     };
     window.addEventListener("keydown", openInbox);
-    return () => window.removeEventListener("keydown", openInbox);
+    const updateShellMode = (event: MediaQueryListEvent) =>
+      setDesktopShell(event.matches);
+    desktopMedia.addEventListener("change", updateShellMode);
+    return () => {
+      window.removeEventListener("keydown", openInbox);
+      desktopMedia.removeEventListener("change", updateShellMode);
+    };
   });
 
   return (
     <>
-      <div id="app">
+      <div
+        id="app"
+        class={{
+          "inbox-open": inboxOpen(),
+          "inspector-open": inspectorOpen(),
+        }}
+      >
         <aside class="sidebar">
           <span>{/* {sidebarW()} x {sidebarH()} */}</span>
           <nav class="nav-items">
@@ -92,7 +140,7 @@ function AppShell() {
               class={["nav-button", { active: inboxOpen() }]}
               aria-label="Inbox"
               title="Inbox"
-              onClick={() => toggleInbox((p) => !p)}
+              onClick={toggleInboxPanel}
             >
               <Icon name="inbox" size={22} />
             </button>
@@ -100,56 +148,44 @@ function AppShell() {
             <For each={navItems}>
               {(item) => (
                 <Link
-                  class={[
-                    "nav-button" +
-                      (`/app/${item.id}` === location().pathname
-                        ? " active"
-                        : ""),
-                  ]}
+                  class={[`nav-button${navActive(item.id) ? " active" : ""}`]}
                   aria-label={item.label}
                   title={item.label}
                   to={`/app/${item.id}`}
-                  onClick={() => toggleInbox(false)}
+                  onClick={closeInboxForNavigation}
                 >
                   <Icon name={item.icon} size={22} />
                 </Link>
               )}
             </For>
+            <button
+              type="button"
+              class={["nav-button global-search-nav", { active: searchOpen() }]}
+              aria-label="Search Items"
+              title="Search Items (Ctrl/⌘ K)"
+              onClick={openSearch}
+            >
+              <Icon name="search" size={21} />
+            </button>
           </nav>
           <WorkspaceMenu />
         </aside>
+        <div class={["inbox-host", { open: inboxOpen() }]}>
+          <InboxPanel
+            open={inboxOpen()}
+            docked={desktopShell()}
+            onClose={closeInbox}
+          />
+        </div>
         <main class="main">
-          <button
-            type="button"
-            class="global-search-trigger"
-            aria-label="Search Items"
-            title="Search Items (Ctrl/⌘ K)"
-            onClick={() => {
-              setSearchOpen(true);
-              queueMicrotask(() =>
-                document
-                  .querySelector<HTMLInputElement>("#global-search-input")
-                  ?.focus(),
-              );
-            }}
-          >
-            <Icon name="search" size={18} />
-          </button>
           <Outlet />
         </main>
-        <div class="overlay-layer">
-          <Show when={inboxOpen()}>
-            <div class="inbox-host open">
-              <InboxPanel onClose={closeInbox} />
-            </div>
-          </Show>
-          <ItemInspector />
-          <Show when={searchOpen()}>
-            <div class="search-host open" onClick={closeSearch}>
-              <SearchPanel onClose={closeSearch} />
-            </div>
-          </Show>
-        </div>
+        <ItemInspector docked={desktopShell()} />
+        <Show when={searchOpen()}>
+          <div class="search-host open" onClick={closeSearch}>
+            <SearchPanel onClose={closeSearch} />
+          </div>
+        </Show>
       </div>
     </>
   );

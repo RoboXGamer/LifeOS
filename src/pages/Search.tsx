@@ -1,9 +1,16 @@
 import { createSignal, For, Show } from "solid-js";
 import { useNavigate, useRouterState } from "@tanstack/solid-router";
+import { api } from "../../convex/_generated/api";
 import { Icon } from "../Icon";
+import { createQuery } from "../convex";
 import { ItemRow } from "../features/items/ItemRow";
-import { useItems, type ItemType } from "../features/items/context";
+import {
+  useItems,
+  type ItemType,
+  type ItemView,
+} from "../features/items/context";
 import { useItemPanelRoute } from "../features/items/routing";
+import { useWorkspaces } from "../features/workspaces/context";
 import type { AppRouteSearch } from "../router";
 import "./Retrieval.css";
 
@@ -18,16 +25,27 @@ const types: Array<ItemType | "All"> = [
 
 export default function Search() {
   const items = useItems();
+  const workspaces = useWorkspaces();
   const panel = useItemPanelRoute();
   const navigate = useNavigate();
   const location = useRouterState({ select: (state) => state.location });
   const query = () => ((location().search as AppRouteSearch).q ?? "").trim();
   const [draft, setDraft] = createSignal(query());
   const [type, setType] = createSignal<ItemType | "All">("All");
+  const titleResults = createQuery(
+    api.items.search,
+    () => {
+      const workspaceId = workspaces.state.activeWorkspaceId;
+      return workspaceId && query()
+        ? { workspaceId, searchTerm: query(), limit: 60 }
+        : "skip";
+    },
+    { initialValue: [] },
+  );
   const results = () => {
     const term = query().toLowerCase();
     if (!term) return [];
-    return items.activeItems.filter((item) => {
+    const enrichedMatches = items.activeItems.filter((item) => {
       const area =
         items.areas().find((entry) => entry._id === item.areaId)?.name ??
         "Inbox";
@@ -37,6 +55,12 @@ export default function Search() {
           .includes(term);
       return matchesText && (type() === "All" || item.type === type());
     });
+    const combined = new Map<string, ItemView>();
+    for (const item of [...(titleResults() ?? []), ...enrichedMatches]) {
+      if (type() === "All" || item.type === type())
+        combined.set(item._id, item);
+    }
+    return [...combined.values()];
   };
   const submit = (event: SubmitEvent) => {
     event.preventDefault();

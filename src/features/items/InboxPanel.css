@@ -1,14 +1,18 @@
 .inbox-host {
-  display: none;
+  position: absolute;
+  z-index: 60;
+  inset: 0;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .inbox-host.open {
-  display: contents;
+  visibility: visible;
+  pointer-events: auto;
 }
 
 .inbox-panel-backdrop {
-  position: fixed;
-  z-index: 60;
+  position: absolute;
   inset: 0;
   background: rgb(23 27 49 / 14%);
   backdrop-filter: blur(2px);
@@ -42,7 +46,39 @@
   border-radius: 20px;
   background: white;
   box-shadow: 14px 20px 70px rgb(25 29 58 / 22%);
-  animation: inbox-enter 180ms ease-out;
+  animation: inbox-enter 140ms ease-out;
+}
+
+@media (min-width: 1181px) {
+  .inbox-host,
+  .inbox-host.open {
+    position: relative;
+    z-index: auto;
+    grid-column: 2;
+    grid-row: 1;
+    inset: auto;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .inbox-panel-backdrop {
+    position: relative;
+    height: 100%;
+    background: transparent;
+    backdrop-filter: none;
+  }
+
+  .inbox-panel {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    border-right: 1px solid var(--color-border);
+    border-radius: 0;
+    box-shadow: none;
+    animation: none;
+  }
 }
 
 @keyframes inbox-enter {
@@ -368,7 +404,7 @@
 
 @media (max-width: 680px) {
   .inbox-panel {
-    inset: 0 0 0 62px;
+    inset: 0 0 68px 0;
     width: auto;
     border: 0;
     border-radius: 0;

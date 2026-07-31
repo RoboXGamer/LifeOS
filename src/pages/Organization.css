@@ -34,16 +34,19 @@
 .tag-layout {
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(210px, 0.34fr) minmax(0, 1fr);
-  gap: 18px;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 16px;
 }
 
 .tag-list {
-  grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   grid-auto-rows: min-content;
+  max-height: 230px;
+  padding: 2px 2px 6px;
 }
 .tag-results {
-  padding-left: 4px;
+  padding: 14px 4px 0;
+  border-top: 1px solid var(--color-border);
 }
 
 .tag-list,
@@ -164,7 +167,7 @@
 .search-host {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  z-index: 100;
   display: grid;
   place-items: start center;
   padding: min(12vh, 100px) 16px 16px;
@@ -312,23 +315,6 @@
   text-align: center;
 }
 
-.global-search-trigger {
-  position: absolute;
-  z-index: 2;
-  top: 18px;
-  right: 18px;
-  width: 38px;
-  height: 38px;
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--color-border);
-  border-radius: 11px;
-  color: hsl(225 14% 42%);
-  background: rgb(255 255 255 / 88%);
-  box-shadow: 0 5px 16px var(--color-shadow);
-  cursor: pointer;
-}
-
 @media (max-width: 680px) {
   .organization-page {
     padding-inline: 2px;
@@ -352,11 +338,6 @@
   .search-panel {
     max-height: 82vh;
     border-radius: 17px;
-  }
-
-  .global-search-trigger {
-    top: 12px;
-    right: 12px;
   }
 }
 
