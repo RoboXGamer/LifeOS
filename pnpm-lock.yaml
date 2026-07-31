@@ -38,6 +38,9 @@ importers:
       solid-js:
         specifier: 2.0.0-beta.29
         version: 2.0.0-beta.29
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
     devDependencies:
       '@types/node':
         specifier: ^26.1.0

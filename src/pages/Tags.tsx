@@ -3,9 +3,9 @@ import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { createMutation, createQuery, toError } from "../convex";
 import { Icon } from "../Icon";
+import { ItemRow } from "../features/items/ItemRow";
 import { useItems } from "../features/items/context";
 import { useItemPanelRoute } from "../features/items/routing";
-import { itemIcon } from "../features/items/types";
 import { useWorkspaces } from "../features/workspaces/context";
 import "./Organization.css";
 import "./Retrieval.css";
@@ -34,9 +34,7 @@ export default function Tags() {
     const tag = selectedTag();
     if (!tag) return [];
     return items.activeItems.filter((item) =>
-      item.tags.some(
-        (value) => value.toLowerCase() === tag.normalizedName,
-      ),
+      item.tags.some((value) => value.toLowerCase() === tag.normalizedName),
     );
   };
   const beginRename = (tagId: Id<"tags">, currentName: string) => {
@@ -85,9 +83,7 @@ export default function Tags() {
                   <Icon name="tag" size={15} />
                   <span>{tag().name}</span>
                 </button>
-                <small>
-                  {tag().countIsLimited ? "300+" : tag().itemCount}
-                </small>
+                <small>{tag().countIsLimited ? "300+" : tag().itemCount}</small>
                 <Show
                   when={editing() === tag()._id}
                   fallback={
@@ -143,25 +139,15 @@ export default function Tags() {
           >
             <For each={taggedItems()} keyed={(item) => item._id}>
               {(item) => (
-                <article class="retrieval-row">
-                  <span class="retrieval-icon">
-                    <Icon name={itemIcon(item().type)} size={18} />
-                  </span>
-                  <button
-                    type="button"
-                    class="retrieval-main"
-                    onClick={() => panel.openItem(item()._id)}
-                  >
-                    <strong>{item().title}</strong>
-                    <span>{item().type ?? "Unsorted"}</span>
-                  </button>
-                  <span class="retrieval-badge">
-                    {items
-                      .areas()
-                      .find((area) => area._id === item().areaId)?.name ??
-                      "Inbox"}
-                  </span>
-                </article>
+                <ItemRow
+                  item={item()}
+                  areaName={
+                    items.areas().find((area) => area._id === item().areaId)
+                      ?.name ?? "Inbox"
+                  }
+                  onOpen={(id) => panel.openItem(id)}
+                  onToggleTask={(id, done) => void items.setTaskDone(id, done)}
+                />
               )}
             </For>
           </Show>

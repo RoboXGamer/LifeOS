@@ -4,17 +4,22 @@ import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { createQuery } from "../convex";
 import { Icon } from "../Icon";
+import { ItemRow } from "../features/items/ItemRow";
 import {
   compactDateLabel,
   localDateKey,
   monthRange,
 } from "../features/items/dates";
-import { useItems } from "../features/items/context";
+import { useItems, type ItemView } from "../features/items/context";
 import { useItemPanelRoute } from "../features/items/routing";
 import { itemIcon } from "../features/items/types";
-import "./Retrieval.css";
+import "./AreaCalendar.css";
 
+type CalendarView = "week" | "agenda" | "month";
 const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const addDays = (date: Date, amount: number) =>
+  new Date(date.getFullYear(), date.getMonth(), date.getDate() + amount);
+const startOfWeek = (date: Date) => addDays(date, -((date.getDay() + 6) % 7));
 
 export default function AreaCalendar() {
   const params = useParams({ from: "/app/areas/$areaId/calendar" });
@@ -22,162 +27,407 @@ export default function AreaCalendar() {
   const panel = useItemPanelRoute();
   const areaId = () => params().areaId as Id<"areas">;
   const area = () => items.areas().find((entry) => entry._id === areaId());
-  const [month, setMonth] = createSignal(
-    new Date(new Date().getFullYear(), new Date().getMonth(), 1),
-  );
+  const [view, setView] = createSignal<CalendarView>("week");
+  const [anchor, setAnchor] = createSignal(new Date());
   const [selectedDate, setSelectedDate] = createSignal(localDateKey());
-  const range = () => monthRange(month());
+  const [search, setSearch] = createSignal("");
+  const range = () => {
+    if (view() === "month") return monthRange(anchor());
+    const start = startOfWeek(anchor());
+    const end = addDays(start, view() === "agenda" ? 41 : 6);
+    return { fromDate: localDateKey(start), toDate: localDateKey(end) };
+  };
   const source = createQuery(
     api.items.listAreaRange,
-    () => ({
-      areaId: areaId(),
-      fromDate: range().fromDate,
-      toDate: range().toDate,
-    }),
+    () => ({ areaId: areaId(), ...range() }),
     { initialValue: [] },
   );
-  const selectedItems = () =>
-    (source() ?? []).filter((item) => item.dueDate === selectedDate());
-  const monthLabel = () =>
-    new Intl.DateTimeFormat(undefined, {
-      month: "long",
-      year: "numeric",
-    }).format(month());
-  const calendarDays = () => {
-    const first = new Date(month().getFullYear(), month().getMonth(), 1);
-    const offset = (first.getDay() + 6) % 7;
-    const last = new Date(month().getFullYear(), month().getMonth() + 1, 0);
-    return [
-      ...Array.from({ length: offset }, (_, index) => ({
-        key: `before-${index}`,
-        date: "",
-        number: 0,
-      })),
-      ...Array.from({ length: last.getDate() }, (_, index) => {
-        const date = new Date(
-          month().getFullYear(),
-          month().getMonth(),
-          index + 1,
-        );
-        return {
-          key: localDateKey(date),
-          date: localDateKey(date),
-          number: index + 1,
-        };
-      }),
-    ];
-  };
-  const countFor = (date: string) =>
-    (source() ?? []).filter((item) => item.dueDate === date).length;
-  const moveMonth = (amount: number) => {
-    const next = new Date(
-      month().getFullYear(),
-      month().getMonth() + amount,
-      1,
+  const filtered = () => {
+    const query = search().trim().toLowerCase();
+    return (source() ?? []).filter(
+      (item) =>
+        !query ||
+        `${item.title} ${item.type ?? ""} ${item.tags.join(" ")}`
+          .toLowerCase()
+          .includes(query),
     );
-    setMonth(next);
-    setSelectedDate(localDateKey(next));
   };
+  const weekDays = () =>
+    Array.from({ length: 7 }, (_, index) =>
+      addDays(startOfWeek(anchor()), index),
+    );
+  const itemsFor = (date: string) =>
+    filtered().filter((item) => item.dueDate === date);
+  const selectedItems = () => itemsFor(selectedDate());
+  const overdue = () =>
+    items.activeItems
+      .filter(
+        (item) =>
+          item.areaId === areaId() &&
+          item.type === "Task" &&
+          item.status !== "Done" &&
+          item.dueDate &&
+          item.dueDate < localDateKey(),
+      )
+      .slice(0, 5);
+  const rangeLabel = () => {
+    if (view() === "month")
+      return new Intl.DateTimeFormat(undefined, {
+        month: "long",
+        year: "numeric",
+      }).format(anchor());
+    const dates = weekDays();
+    const end = view() === "agenda" ? addDays(dates[0], 41) : dates[6];
+    const format = (date: Date) =>
+      new Intl.DateTimeFormat(undefined, {
+        month: "short",
+        day: "numeric",
+      }).format(date);
+    return `${format(dates[0])} – ${format(end)}, ${end.getFullYear()}`;
+  };
+  const move = (amount: number) => {
+    const current = anchor();
+    const next =
+      view() === "month"
+        ? new Date(current.getFullYear(), current.getMonth() + amount, 1)
+        : addDays(current, amount * (view() === "agenda" ? 42 : 7));
+    setAnchor(next);
+    setSelectedDate(
+      localDateKey(view() === "month" ? next : startOfWeek(next)),
+    );
+  };
+  const goToday = () => {
+    setAnchor(new Date());
+    setSelectedDate(localDateKey());
+  };
+  const createOn = (date: string) => panel.createItem({ area: areaId(), date });
+  const open = (itemId: Id<"items">) => panel.openItem(itemId);
+  const toggle = (itemId: Id<"items">, done: boolean) =>
+    void items.setTaskDone(itemId, done);
 
   return (
-    <section class="retrieval-page">
-      <header class="retrieval-header">
-        <div>
-          <span>{area()?.name ?? "Area"}</span>
-          <h2>{monthLabel()}</h2>
-          <p>Dated Items in this Area, bounded to one month at a time.</p>
+    <section class="area-calendar-page">
+      <header class="calendar-product-header">
+        <div class="calendar-title">
+          <div class="area-breadcrumb">
+            <Link to="/app/areas">Areas</Link>
+            <Icon name="chevronRight" size={14} />
+            <Link to="/app/areas/$areaId" params={{ areaId: areaId() }}>
+              {area()?.name ?? "Area"}
+            </Link>
+            <Icon name="chevronRight" size={14} />
+            <span>Calendar</span>
+          </div>
+          <h1>{area()?.name ?? "Area"} Calendar</h1>
+          <p>Plan dated Items without losing the context of this Area.</p>
         </div>
-        <div class="calendar-actions">
-          <Link to="/app/areas/$areaId" params={{ areaId: areaId() }}>
-            <Icon name="list" size={16} />
-            List
-          </Link>
-          <button type="button" onClick={() => moveMonth(-1)}>
-            Previous
-          </button>
-          <button type="button" onClick={() => moveMonth(1)}>
-            Next
-          </button>
-        </div>
+        <button class="primary-action" onClick={() => createOn(selectedDate())}>
+          <Icon name="plus" size={17} /> New Item
+        </button>
       </header>
-      <div class="retrieval-scroll">
-        <div class="calendar-grid" aria-label={`${monthLabel()} calendar`}>
-          <For each={weekdays}>{(day) => <span class="calendar-weekday">{day}</span>}</For>
-          <For each={calendarDays()} keyed={(day) => day.key}>
-            {(day) => (
+
+      <div class="calendar-toolbar">
+        <div class="calendar-navigation">
+          <button aria-label="Previous period" onClick={() => move(-1)}>
+            <Icon name="chevronRight" size={16} />
+          </button>
+          <strong>{rangeLabel()}</strong>
+          <button aria-label="Next period" onClick={() => move(1)}>
+            <Icon name="chevronRight" size={16} />
+          </button>
+          <button onClick={goToday}>Today</button>
+        </div>
+        <label>
+          <Icon name="search" size={16} />
+          <input
+            value={search()}
+            placeholder="Search calendar…"
+            onInput={(event) => setSearch(event.currentTarget.value)}
+          />
+        </label>
+        <div class="calendar-view-tabs">
+          <For each={["week", "agenda", "month"] as CalendarView[]}>
+            {(mode) => (
               <button
-                type="button"
-                class={[
-                  "calendar-day",
-                  {
-                    outside: !day().date,
-                    today: day().date === localDateKey(),
-                    selected: day().date === selectedDate(),
-                  },
-                ]}
-                disabled={!day().date}
-                aria-label={
-                  day().date
-                    ? `${compactDateLabel(day().date)}, ${countFor(day().date)} items`
-                    : "Outside current month"
-                }
-                onClick={() => day().date && setSelectedDate(day().date)}
+                class={{ active: view() === mode }}
+                onClick={() => setView(mode)}
               >
-                <span>{day().number || ""}</span>
-                <Show when={countFor(day().date) > 0}>
-                  <small>{countFor(day().date)} items</small>
-                </Show>
+                {mode}
               </button>
             )}
           </For>
         </div>
-        <section class="retrieval-section">
+      </div>
+
+      <div class="calendar-stats">
+        <Metric label="In range" value={filtered().length} />
+        <Metric
+          label="Tasks"
+          value={filtered().filter((item) => item.type === "Task").length}
+        />
+        <Metric
+          label="Events"
+          value={filtered().filter((item) => item.type === "Event").length}
+        />
+        <Metric
+          label="Finances"
+          value={
+            filtered().filter(
+              (item) => item.type === "Expense" || item.type === "Payment",
+            ).length
+          }
+        />
+      </div>
+
+      <div class="calendar-product-layout">
+        <main>
+          <Show when={view() === "week"}>
+            <WeekView
+              days={weekDays()}
+              itemsFor={itemsFor}
+              selectedDate={selectedDate()}
+              onSelect={setSelectedDate}
+              onCreate={createOn}
+              onOpen={open}
+            />
+          </Show>
+          <Show when={view() === "agenda"}>
+            <AgendaView items={filtered()} onOpen={open} onToggle={toggle} />
+          </Show>
+          <Show when={view() === "month"}>
+            <MonthView
+              anchor={anchor()}
+              itemsFor={itemsFor}
+              selectedDate={selectedDate()}
+              onSelect={setSelectedDate}
+            />
+          </Show>
+        </main>
+        <aside class="calendar-day-panel">
           <header>
-            <h3>{compactDateLabel(selectedDate())}</h3>
-            <button
-              type="button"
-              class="primary-action"
-              onClick={() =>
-                panel.createItem({
-                  area: areaId(),
-                  date: selectedDate(),
-                })
-              }
-            >
-              Add on this date
+            <div>
+              <span>Selected day</span>
+              <h3>{compactDateLabel(selectedDate())}</h3>
+            </div>
+            <button onClick={() => createOn(selectedDate())}>
+              <Icon name="plus" size={15} /> Add
             </button>
           </header>
-          <Show
-            when={selectedItems().length > 0}
-            fallback={
-              <div class="retrieval-empty">
-                <p>No dated Items on this day.</p>
-              </div>
-            }
-          >
-            <For each={selectedItems()} keyed={(item) => item._id}>
-              {(item) => (
-                <article class="retrieval-row">
-                  <span class="retrieval-icon">
-                    <Icon name={itemIcon(item().type)} size={18} />
-                  </span>
-                  <button
-                    type="button"
-                    class="retrieval-main"
-                    onClick={() => panel.openItem(item()._id)}
-                  >
-                    <strong>{item().title}</strong>
-                    <span>{item().type ?? "Unsorted"}</span>
-                  </button>
-                  <span class="retrieval-badge">
-                    {item().status ?? item().type ?? "Item"}
-                  </span>
-                </article>
-              )}
+          <div class="calendar-selected-list">
+            <For
+              each={selectedItems()}
+              fallback={<p>No Items on this date.</p>}
+              keyed={(item) => item._id}
+            >
+              {(item) => <MiniItem item={item()} onOpen={open} />}
             </For>
+          </div>
+          <Show when={overdue().length > 0}>
+            <section class="calendar-overdue">
+              <header>
+                <span>Overdue</span>
+                <strong>{overdue().length}</strong>
+              </header>
+              <For each={overdue()} keyed={(item) => item._id}>
+                {(item) => <MiniItem item={item()} onOpen={open} />}
+              </For>
+            </section>
           </Show>
-        </section>
+        </aside>
       </div>
     </section>
+  );
+}
+
+function Metric(props: { label: string; value: number }) {
+  return (
+    <div>
+      <strong>{props.value}</strong>
+      <span>{props.label}</span>
+    </div>
+  );
+}
+
+function WeekView(props: {
+  days: Date[];
+  itemsFor: (date: string) => ItemView[];
+  selectedDate: string;
+  onSelect: (date: string) => void;
+  onCreate: (date: string) => void;
+  onOpen: (id: Id<"items">) => void;
+}) {
+  return (
+    <div class="week-calendar">
+      <For each={props.days}>
+        {(day, index) => {
+          const key = localDateKey(day);
+          return (
+            <section
+              class={{
+                selected: props.selectedDate === key,
+                today: localDateKey() === key,
+              }}
+              onClick={() => props.onSelect(key)}
+            >
+              <header>
+                <span>{weekdays[index()]}</span>
+                <strong>{day.getDate()}</strong>
+              </header>
+              <div>
+                <For each={props.itemsFor(key)} keyed={(item) => item._id}>
+                  {(item) => (
+                    <button
+                      class={`calendar-chip type-${item().type?.toLowerCase() ?? "item"}`}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        props.onOpen(item()._id);
+                      }}
+                    >
+                      <Icon name={itemIcon(item().type)} size={14} />
+                      <span>{item().title}</span>
+                    </button>
+                  )}
+                </For>
+              </div>
+              <button
+                class="calendar-add-day"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  props.onCreate(key);
+                }}
+              >
+                <Icon name="plus" size={13} /> Add item
+              </button>
+            </section>
+          );
+        }}
+      </For>
+    </div>
+  );
+}
+
+function AgendaView(props: {
+  items: ItemView[];
+  onOpen: (id: Id<"items">) => void;
+  onToggle: (id: Id<"items">, done: boolean) => void;
+}) {
+  const groups = () => {
+    const map = new Map<string, ItemView[]>();
+    for (const item of props.items)
+      if (item.dueDate)
+        map.set(item.dueDate, [...(map.get(item.dueDate) ?? []), item]);
+    return [...map.entries()];
+  };
+  return (
+    <div class="calendar-agenda">
+      <For
+        each={groups()}
+        fallback={
+          <p class="calendar-empty-copy">No dated Items in this range.</p>
+        }
+        keyed={(group) => group[0]}
+      >
+        {(group) => (
+          <section>
+            <header>
+              <strong>{compactDateLabel(group()[0])}</strong>
+              <span>{group()[1].length}</span>
+            </header>
+            <For each={group()[1]} keyed={(item) => item._id}>
+              {(item) => (
+                <ItemRow
+                  item={item()}
+                  compact
+                  onOpen={props.onOpen}
+                  onToggleTask={props.onToggle}
+                />
+              )}
+            </For>
+          </section>
+        )}
+      </For>
+    </div>
+  );
+}
+
+function MonthView(props: {
+  anchor: Date;
+  itemsFor: (date: string) => ItemView[];
+  selectedDate: string;
+  onSelect: (date: string) => void;
+}) {
+  const days = () => {
+    const first = new Date(
+      props.anchor.getFullYear(),
+      props.anchor.getMonth(),
+      1,
+    );
+    const offset = (first.getDay() + 6) % 7;
+    const last = new Date(
+      props.anchor.getFullYear(),
+      props.anchor.getMonth() + 1,
+      0,
+    );
+    return [
+      ...Array.from({ length: offset }, () => null),
+      ...Array.from(
+        { length: last.getDate() },
+        (_, i) =>
+          new Date(props.anchor.getFullYear(), props.anchor.getMonth(), i + 1),
+      ),
+    ];
+  };
+  return (
+    <div class="month-product-calendar">
+      <For each={weekdays}>{(day) => <span>{day}</span>}</For>
+      <For each={days()}>
+        {(day) => (
+          <Show when={day} fallback={<i />}>
+            {(date) => {
+              const key = localDateKey(date());
+              const dayItems = () => props.itemsFor(key);
+              return (
+                <button
+                  class={{
+                    selected: props.selectedDate === key,
+                    today: localDateKey() === key,
+                  }}
+                  onClick={() => props.onSelect(key)}
+                >
+                  <strong>{date().getDate()}</strong>
+                  <For each={dayItems().slice(0, 2)}>
+                    {(item) => <small>{item.title}</small>}
+                  </For>
+                  <Show when={dayItems().length > 2}>
+                    <em>+{dayItems().length - 2} more</em>
+                  </Show>
+                </button>
+              );
+            }}
+          </Show>
+        )}
+      </For>
+    </div>
+  );
+}
+
+function MiniItem(props: {
+  item: ItemView;
+  onOpen: (id: Id<"items">) => void;
+}) {
+  return (
+    <button
+      class="calendar-mini-item"
+      onClick={() => props.onOpen(props.item._id)}
+    >
+      <span>
+        <Icon name={itemIcon(props.item.type)} size={15} />
+      </span>
+      <div>
+        <strong>{props.item.title}</strong>
+        <small>{props.item.type ?? "Unsorted"}</small>
+      </div>
+      <Icon name="chevronRight" size={14} />
+    </button>
   );
 }

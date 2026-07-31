@@ -6,18 +6,17 @@ import {
   redirect,
 } from "@tanstack/solid-router";
 import App from "./App";
+import { LandingPage } from "./LandingPage";
 import AreaDetail from "./pages/AreaDetail";
 import AreaCalendar from "./pages/AreaCalendar";
 import Areas from "./pages/Areas";
 import Archive from "./pages/Archive";
 import Settings from "./pages/Settings";
+import Search from "./pages/Search";
 import Tags from "./pages/Tags";
 import Today from "./pages/Today";
 import Upcoming from "./pages/Upcoming";
-import {
-  NotFoundPage,
-  RouteErrorPage,
-} from "./pages/Placeholder";
+import { NotFoundPage, RouteErrorPage } from "./pages/Placeholder";
 
 export type ItemPanelMode = "view" | "edit" | "create" | "archived";
 
@@ -27,6 +26,7 @@ export interface AppRouteSearch {
   parent?: string;
   area?: string;
   date?: string;
+  q?: string;
 }
 
 function validateAppSearch(search: Record<string, unknown>): AppRouteSearch {
@@ -39,6 +39,7 @@ function validateAppSearch(search: Record<string, unknown>): AppRouteSearch {
     parent: typeof search.parent === "string" ? search.parent : undefined,
     area: typeof search.area === "string" ? search.area : undefined,
     date: typeof search.date === "string" ? search.date : undefined,
+    q: typeof search.q === "string" ? search.q : undefined,
   };
 }
 
@@ -51,13 +52,7 @@ const rootRoute = createRootRoute({
 const landingRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
-  component: () => (
-    <main class="landing-placeholder">
-      <span>Life OS</span>
-      <h1>Keep every important part of life in view.</h1>
-      <a href="/app/areas">Open Life OS</a>
-    </main>
-  ),
+  component: LandingPage,
 });
 
 const appRoute = createRoute({
@@ -130,6 +125,13 @@ const settingsRoute = createRoute({
   component: Settings,
 });
 
+const searchRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "/search",
+  validateSearch: validateAppSearch,
+  component: Search,
+});
+
 const routeTree = rootRoute.addChildren([
   landingRoute,
   appRoute.addChildren([
@@ -142,6 +144,7 @@ const routeTree = rootRoute.addChildren([
     tagsRoute,
     archiveRoute,
     settingsRoute,
+    searchRoute,
   ]),
 ]);
 

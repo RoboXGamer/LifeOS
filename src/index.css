@@ -78,6 +78,20 @@ p {
   height: calc(100vh - 2 * var(--_margin));
 }
 
+body:has(.landing-page) {
+  min-width: 320px;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background: #f8f9fd;
+}
+
+#root:has(.landing-page) {
+  --_margin: 0px;
+  min-height: 100vh;
+  height: auto;
+  font-family: "DM Sans", "Segoe UI", sans-serif;
+}
+
 .landing-placeholder,
 .page-state {
   display: grid;

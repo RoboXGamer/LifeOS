@@ -1,4 +1,4 @@
-import { createEffect, createSignal, For, onSettled } from "solid-js";
+import { createEffect, createSignal, For, onSettled, Show } from "solid-js";
 import "./App.css";
 import { Icon } from "./Icon.tsx";
 import { Outlet, Link, useLocation } from "@tanstack/solid-router";
@@ -8,6 +8,7 @@ import { ItemProvider } from "./features/items/context";
 import { InboxPanel } from "./features/items/InboxPanel";
 import { ItemInspector } from "./features/items/ItemInspector";
 import { SearchPanel } from "./features/items/SearchPanel";
+import { AuthProvider } from "./auth/context";
 
 const navItems = [
   { id: "areas", label: "Areas", icon: "grid" },
@@ -19,11 +20,13 @@ const navItems = [
 
 function App() {
   return (
-    <WorkspaceProvider>
-      <ItemProvider>
-        <AppShell />
-      </ItemProvider>
-    </WorkspaceProvider>
+    <AuthProvider>
+      <WorkspaceProvider>
+        <ItemProvider>
+          <AppShell />
+        </ItemProvider>
+      </WorkspaceProvider>
+    </AuthProvider>
   );
 }
 
@@ -135,20 +138,17 @@ function AppShell() {
           <Outlet />
         </main>
         <div class="overlay-layer">
-          <div
-            class={["inbox-host", { open: inboxOpen() }]}
-            aria-hidden={inboxOpen() ? "false" : "true"}
-          >
-            <InboxPanel onClose={closeInbox} />
-          </div>
+          <Show when={inboxOpen()}>
+            <div class="inbox-host open">
+              <InboxPanel onClose={closeInbox} />
+            </div>
+          </Show>
           <ItemInspector />
-          <div
-            class={["search-host", { open: searchOpen() }]}
-            aria-hidden={searchOpen() ? "false" : "true"}
-            onClick={closeSearch}
-          >
-            <SearchPanel onClose={closeSearch} />
-          </div>
+          <Show when={searchOpen()}>
+            <div class="search-host open" onClick={closeSearch}>
+              <SearchPanel onClose={closeSearch} />
+            </div>
+          </Show>
         </div>
       </div>
     </>

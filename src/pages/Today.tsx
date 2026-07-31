@@ -3,6 +3,7 @@ import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { createQuery } from "../convex";
 import { Icon } from "../Icon";
+import { ItemRow } from "../features/items/ItemRow";
 import { localDateKey, longDateLabel } from "../features/items/dates";
 import { useItems, type ItemView } from "../features/items/context";
 import { useItemPanelRoute } from "../features/items/routing";
@@ -39,33 +40,15 @@ export default function Today() {
   };
 
   const row = (item: () => ItemView) => (
-    <article class={["retrieval-row", { done: item().status === "Done" }]}>
-      <button
-        type="button"
-        class="retrieval-check"
-        aria-label={
-          item().status === "Done"
-            ? `Mark ${item().title} incomplete`
-            : `Complete ${item().title}`
-        }
-        onClick={() => toggle(item()._id, item().status !== "Done")}
-      >
-        <Icon name="checkSquare" size={18} />
-      </button>
-      <button
-        type="button"
-        class="retrieval-main"
-        onClick={() => panel.openItem(item()._id)}
-      >
-        <strong>{item().title}</strong>
-        <span>
-          {items.areas().find((area) => area._id === item().areaId)?.name ??
-            "Inbox"}
-          {item().priority ? ` · Priority ${item().priority}` : ""}
-        </span>
-      </button>
-      <span class="retrieval-badge">{item().status ?? "Todo"}</span>
-    </article>
+    <ItemRow
+      item={item()}
+      areaName={
+        items.areas().find((area) => area._id === item().areaId)?.name ??
+        "Inbox"
+      }
+      onOpen={(id) => panel.openItem(id)}
+      onToggleTask={(id, done) => void toggle(id, done)}
+    />
   );
 
   return (
@@ -98,6 +81,21 @@ export default function Today() {
         }
       >
         <div class="retrieval-scroll">
+          <section class="today-progress">
+            <div>
+              <strong>
+                {completed().length} of {rows.length}
+              </strong>
+              <span>completed today</span>
+            </div>
+            <i>
+              <b
+                style={{
+                  width: `${rows.length ? (completed().length / rows.length) * 100 : 0}%`,
+                }}
+              />
+            </i>
+          </section>
           <section class="retrieval-section">
             <header>
               <h3>Open</h3>

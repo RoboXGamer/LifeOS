@@ -4,6 +4,7 @@ import {
   createEffect,
   createSignal,
   onSettled,
+  untrack,
   type Accessor,
 } from "solid-js";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -107,7 +108,9 @@ export function ItemInspector() {
                     <ItemForm
                       title="Edit Item"
                       item={item}
-                      initialAreaId={() => item().areaId ?? undefined}
+                      initialAreaId={() =>
+                        panel.search().area ?? item().areaId ?? undefined
+                      }
                       initialParentId={() => item().parentId ?? undefined}
                       initialDueDate={() => item().dueDate}
                       onClose={() =>
@@ -186,34 +189,38 @@ function ItemForm(props: {
   onSaved: () => void;
 }) {
   const items = useItems();
-  const initial = props.item?.();
+  const initial = untrack(() => props.item?.());
   const contextualParent = () =>
     items.itemById(props.initialParentId()) ?? undefined;
   const [title, setTitle] = createSignal(initial?.title ?? "");
   const [type, setType] = createSignal<ItemType | null>(initial?.type ?? null);
-  const [areaId, setAreaId] = createSignal<string>(
-    initial?.areaId ??
+  const initialAreaId = untrack(
+    () =>
+      initial?.areaId ??
       contextualParent()?.areaId ??
       props.initialAreaId() ??
       "",
   );
+  const initialParentId = untrack(
+    () => initial?.parentId ?? props.initialParentId() ?? "",
+  );
+  const initialDueDate = untrack(
+    () => initial?.dueDate ?? props.initialDueDate() ?? "",
+  );
+  const [areaId, setAreaId] = createSignal<string>(initialAreaId);
   const [status, setStatus] = createSignal<ItemStatus>(
     initial?.status ?? "Todo",
   );
   const [priority, setPriority] = createSignal<string>(
     initial?.priority?.toString() ?? "",
   );
-  const [dueDate, setDueDate] = createSignal(
-    initial?.dueDate ?? props.initialDueDate() ?? "",
-  );
+  const [dueDate, setDueDate] = createSignal(initialDueDate);
   const [amount, setAmount] = createSignal(initial?.amount?.toString() ?? "");
   const [isSettled, setIsSettled] = createSignal(initial?.isSettled ?? false);
   const [description, setDescription] = createSignal(
     initial?.description ?? "",
   );
-  const [parentId, setParentId] = createSignal(
-    initial?.parentId ?? props.initialParentId() ?? "",
-  );
+  const [parentId, setParentId] = createSignal(initialParentId);
   const [tags, setTags] = createSignal(initial?.tags.join(", ") ?? "");
   const [formError, setFormError] = createSignal<string | null>(null);
   const [saving, setSaving] = createSignal(false);

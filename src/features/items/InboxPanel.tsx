@@ -4,6 +4,7 @@ import { createConnectionState } from "../../convex";
 import { useItems } from "./context";
 import { useItemPanelRoute } from "./routing";
 import { itemIcon } from "./types";
+import { trapTabKey } from "./focus";
 import "./InboxPanel.css";
 
 export function InboxPanel(props: {
@@ -13,6 +14,7 @@ export function InboxPanel(props: {
   const panel = useItemPanelRoute();
   const connection = createConnectionState();
   const [title, setTitle] = createSignal("");
+  const [dragging, setDragging] = createSignal(false);
   let captureInput!: HTMLInputElement;
 
   onSettled(() => {
@@ -35,7 +37,7 @@ export function InboxPanel(props: {
 
   return (
     <div
-      class="inbox-panel-backdrop"
+      class={["inbox-panel-backdrop", { dragging: dragging() }]}
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) props.onClose();
       }}
@@ -45,6 +47,7 @@ export function InboxPanel(props: {
         role="dialog"
         aria-modal="true"
         aria-label="Inbox"
+        onKeyDown={trapTabKey}
       >
         <header>
           <div>
@@ -129,6 +132,17 @@ export function InboxPanel(props: {
               <button
                 type="button"
                 class="inbox-item"
+                draggable="true"
+                onDragStart={(event) => {
+                  setDragging(true);
+                  event.dataTransfer?.setData(
+                    "application/x-lifeos-item",
+                    item()._id,
+                  );
+                  if (event.dataTransfer)
+                    event.dataTransfer.effectAllowed = "move";
+                }}
+                onDragEnd={() => setDragging(false)}
                 onClick={() => {
                   props.onClose(false);
                   panel.openItem(item()._id);

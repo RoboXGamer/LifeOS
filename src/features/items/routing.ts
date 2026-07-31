@@ -7,6 +7,7 @@ export function useItemPanelRoute() {
   const search = () => location().search as AppRouteSearch;
 
   const update = (next: AppRouteSearch, replace = false) => {
+    const merged = { ...next, q: search().q };
     const pathname = location().pathname;
     const areaMatch = /^\/app\/areas\/([^/]+)$/.exec(pathname);
     const calendarMatch = /^\/app\/areas\/([^/]+)\/calendar$/.exec(pathname);
@@ -15,7 +16,7 @@ export function useItemPanelRoute() {
       void navigate({
         to: "/app/areas/$areaId/calendar",
         params: { areaId: calendarMatch[1] },
-        search: next,
+        search: merged,
         replace,
       });
       return;
@@ -24,7 +25,7 @@ export function useItemPanelRoute() {
       void navigate({
         to: "/app/areas/$areaId",
         params: { areaId: areaMatch[1] },
-        search: next,
+        search: merged,
         replace,
       });
       return;
@@ -37,9 +38,10 @@ export function useItemPanelRoute() {
       "/app/tags",
       "/app/archive",
       "/app/settings",
+      "/app/search",
     ] as const;
     const target = routes.find((route) => route === pathname) ?? "/app/areas";
-    void navigate({ to: target, search: next, replace });
+    void navigate({ to: target, search: merged, replace });
   };
 
   const openItem = (itemId: string, mode: ItemPanelMode = "view") =>

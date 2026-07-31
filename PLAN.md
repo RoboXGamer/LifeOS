@@ -577,6 +577,47 @@ Area visibility is enforced after search so archived Areas cannot surface.
 
 ---
 
+# Milestone C.5 — Frontend productization and polish
+
+This milestone restores the product density and interaction quality proven in
+`draft2` without copying its centralized state or component architecture.
+`draft3` remains authoritative for routing, Convex data, optimistic actions,
+the compact sidebar, global Inbox drawer, and route-aware Item inspector.
+
+## Phase 8.5 — Product UI refactor
+
+- [x] Establish shared page headers, Item rows, badges, metric cards, filters,
+      empty states, and responsive desktop/mobile presentation.
+- [x] Upgrade Areas with richer identity, visual editing, useful counts, and
+      safe desktop Inbox-to-Area organization.
+- [x] Rebuild Area Detail around a summary, metrics, search/type filters, dense
+      metadata, expandable children, and inline Task actions.
+- [x] Make Week the default Area calendar view, with Agenda and Month modes,
+      bounded range queries, quick date creation, overdue context, and shared
+      inspector actions.
+- [x] Restore Today progress, strengthen Upcoming grouping, broaden Search, and
+      polish Tags, Archive, Settings, Inbox, and the Item inspector.
+- [x] Use a full Search results route reached from the global panel without
+      adding a sidebar button.
+- [x] Conditionally mount modal surfaces, trap/restore focus, honor Escape and
+      reduced motion, and remove Solid strict reactive-read warnings.
+- [x] Review desktop table and mobile card layouts in code, then run the milestone build
+      gate once.
+
+Acceptance:
+
+- Draft 2's useful information hierarchy is present across the app while Draft
+  3's shell and server-backed behavior remain intact.
+- Area Detail and Calendar feel like complete product surfaces rather than CRUD
+  verification screens.
+- Shared visual primitives prevent the refactor from becoming another
+  `V1Screens.tsx` monolith.
+- Search and overlays are keyboard-safe and hidden controls are not left
+  interactive.
+- `pnpm run build` passes.
+
+---
+
 # Milestone D — Account permanence and public experience
 
 ## Phase 9 — Anonymous conversion and permanent authentication

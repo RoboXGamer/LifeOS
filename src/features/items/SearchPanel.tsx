@@ -1,37 +1,39 @@
 import { createSignal, For, Show } from "solid-js";
-import { api } from "../../../convex/_generated/api";
-import { createQuery } from "../../convex";
+import { useNavigate } from "@tanstack/solid-router";
 import { Icon } from "../../Icon";
-import { useWorkspaces } from "../workspaces/context";
+import { useItems } from "./context";
 import { useItemPanelRoute } from "./routing";
 import { itemIcon } from "./types";
+import { trapTabKey } from "./focus";
 import "../../pages/Organization.css";
 
 export function SearchPanel(props: { onClose: () => void }) {
-  const workspaces = useWorkspaces();
+  const items = useItems();
   const panel = useItemPanelRoute();
+  const navigate = useNavigate();
   const [input, setInput] = createSignal("");
-  const [searchTerm, setSearchTerm] = createSignal("");
-  let debounceTimer: ReturnType<typeof setTimeout> | undefined;
-  const source = createQuery(
-    api.items.search,
-    () => {
-      const workspaceId = workspaces.state.activeWorkspaceId;
-      const term = searchTerm();
-      return workspaceId && term
-        ? { workspaceId, searchTerm: term, limit: 40 }
-        : "skip";
-    },
-    { initialValue: [] },
-  );
-  const change = (value: string) => {
-    setInput(value);
-    if (debounceTimer) clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => setSearchTerm(value.trim()), 140);
+  const results = () => {
+    const query = input().trim().toLowerCase();
+    if (!query) return [];
+    return items.activeItems
+      .filter((item) => {
+        const area =
+          items.areas().find((entry) => entry._id === item.areaId)?.name ??
+          "Inbox";
+        return `${item.title} ${item.description ?? ""} ${item.type ?? ""} ${item.tags.join(" ")} ${area}`
+          .toLowerCase()
+          .includes(query);
+      })
+      .slice(0, 12);
   };
   const open = (itemId: string) => {
     props.onClose();
     panel.openItem(itemId);
+  };
+  const viewAll = () => {
+    const query = input().trim();
+    props.onClose();
+    void navigate({ to: "/app/search", search: { q: query } });
   };
 
   return (
@@ -40,6 +42,7 @@ export function SearchPanel(props: { onClose: () => void }) {
       role="dialog"
       aria-modal="true"
       aria-label="Search Items"
+      onKeyDown={trapTabKey}
       onClick={(event) => event.stopPropagation()}
     >
       <div class="search-input-row">
@@ -47,11 +50,12 @@ export function SearchPanel(props: { onClose: () => void }) {
         <input
           id="global-search-input"
           value={input()}
-          placeholder="Search Item titles…"
+          placeholder="Search titles, notes, types, tags, and Areas…"
           autocomplete="off"
-          onInput={(event) => change(event.currentTarget.value)}
+          onInput={(event) => setInput(event.currentTarget.value)}
           onKeyDown={(event) => {
             if (event.key === "Escape") props.onClose();
+            if (event.key === "Enter" && input().trim()) viewAll();
           }}
         />
         <button type="button" onClick={props.onClose}>
@@ -60,43 +64,53 @@ export function SearchPanel(props: { onClose: () => void }) {
       </div>
       <div class="search-results">
         <Show
-          when={searchTerm()}
+          when={input().trim()}
           fallback={
             <p class="search-empty">
-              Search is limited to active Items in the current Workspace.
+              Search everything in the current Workspace. Press Enter for all
+              results.
             </p>
           }
         >
-          <Show
-            when={(source() ?? []).length > 0}
+          <For
+            each={results()}
             fallback={<p class="search-empty">No matching Items.</p>}
+            keyed={(item) => item._id}
           >
-            <For each={source() ?? []} keyed={(item) => item._id}>
-              {(item) => (
-                <button
-                  type="button"
-                  class="search-result"
-                  onClick={() => open(item()._id)}
-                >
-                  <span>
-                    <Icon name={itemIcon(item().type)} size={17} />
-                  </span>
-                  <div>
-                    <strong>{item().title}</strong>
-                    <small>
-                      {item().type ?? "Unsorted"}
-                      {item().tags.length
-                        ? ` · ${item().tags.slice(0, 2).join(", ")}`
-                        : ""}
-                    </small>
-                  </div>
-                  <Icon name="chevronRight" size={16} />
-                </button>
-              )}
-            </For>
-          </Show>
+            {(item) => (
+              <button
+                type="button"
+                class="search-result"
+                onClick={() => open(item()._id)}
+              >
+                <span>
+                  <Icon name={itemIcon(item().type)} size={17} />
+                </span>
+                <div>
+                  <strong>{item().title}</strong>
+                  <small>
+                    {item().type ?? "Unsorted"} ·{" "}
+                    {items.areas().find((area) => area._id === item().areaId)
+                      ?.name ?? "Inbox"}
+                    {item().tags.length
+                      ? ` · ${item().tags.slice(0, 2).join(", ")}`
+                      : ""}
+                  </small>
+                </div>
+                <Icon name="chevronRight" size={16} />
+              </button>
+            )}
+          </For>
         </Show>
       </div>
+      <Show when={input().trim()}>
+        <footer class="search-panel-footer">
+          <button onClick={viewAll}>
+            View all results for “{input().trim()}”{" "}
+            <Icon name="chevronRight" size={15} />
+          </button>
+        </footer>
+      </Show>
     </section>
   );
 }

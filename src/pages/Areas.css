@@ -41,6 +41,31 @@
   gap: 8px;
 }
 
+.area-view-toggle {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 10px;
+  background: hsl(228 35% 95%);
+}
+.area-view-toggle button {
+  width: 34px;
+  min-height: 34px !important;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  padding: 0;
+  color: hsl(225 12% 47%);
+  background: transparent;
+  cursor: pointer;
+}
+.area-view-toggle button.active {
+  color: var(--color-purple);
+  background: white;
+  box-shadow: 0 3px 9px rgb(31 36 68 / 8%);
+}
+
 .primary-action,
 .secondary-action {
   display: inline-flex;
@@ -187,6 +212,35 @@
   font-size: 0.68rem;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.area-title small {
+  color: hsl(225 12% 50%);
+  font-size: 0.58rem;
+}
+
+.areas-grid.view-list {
+  --card-height: 92px;
+  grid-template-columns: 1fr;
+  grid-template-rows: none;
+  gap: 9px;
+}
+.areas-grid.view-list .area-item {
+  min-height: 92px;
+  grid-template-columns: 125px minmax(0, 1fr);
+  grid-template-rows: 1fr;
+  overflow: hidden;
+}
+.areas-grid.view-list .deco {
+  min-height: 90px;
+  border-radius: 15px 0 0 15px;
+  border-bottom: 1px solid hsl(from var(--_deco-color) h s l / 50%);
+}
+.areas-grid.view-list .deco::after {
+  display: none;
+}
+.areas-grid.view-list .deco svg {
+  width: 29px;
 }
 
 .area-actions {
@@ -351,6 +405,105 @@
   display: grid;
   gap: 15px;
   padding: 18px 20px 20px;
+}
+
+.area-editor-preview {
+  --_preview-color: var(--color-purple);
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--_preview-color) 25%, white);
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--_preview-color) 7%, white);
+}
+.area-editor-preview > span {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  color: var(--_preview-color);
+  background: color-mix(in srgb, var(--_preview-color) 14%, white);
+}
+.area-editor-preview > div {
+  display: grid;
+  gap: 2px;
+}
+.area-editor-preview small {
+  color: var(--_preview-color);
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+.area-editor-preview strong {
+  font-size: 0.82rem;
+}
+.area-choice-field {
+  display: grid;
+  gap: 7px;
+  border: 0;
+  padding: 0;
+}
+.area-choice-field legend {
+  margin-bottom: 7px;
+  color: hsl(225 15% 38%);
+  font-size: 0.65rem;
+  font-weight: 750;
+}
+.area-icon-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+.area-icon-grid button {
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  color: hsl(225 14% 43%);
+  background: white;
+  cursor: pointer;
+}
+.area-icon-grid button.active {
+  color: var(--color-purple);
+  border-color: color-mix(in srgb, var(--color-purple) 45%, white);
+  background: hsl(248 75% 96%);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-purple) 9%, transparent);
+}
+.area-color-grid {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.area-color-grid > button {
+  --_choice: var(--color-purple);
+  width: 31px;
+  height: 31px;
+  border: 3px solid white;
+  border-radius: 10px;
+  background: var(--_choice);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--_choice) 35%, white);
+  cursor: pointer;
+}
+.area-color-grid > button.active {
+  box-shadow:
+    0 0 0 2px white,
+    0 0 0 4px var(--_choice);
+}
+.custom-area-color {
+  display: flex !important;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+.custom-area-color input {
+  width: 35px !important;
+  height: 31px !important;
+  padding: 2px !important;
 }
 
 .area-dialog label {

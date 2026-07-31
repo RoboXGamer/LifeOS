@@ -22,7 +22,8 @@
     "convex": "^1.42.2",
     "lucide-static": "^1.24.0",
     "nanoid": "^5.1.16",
-    "solid-js": "2.0.0-beta.29"
+    "solid-js": "2.0.0-beta.29",
+    "zod": "4.4.3"
   },
   "devDependencies": {
     "@types/node": "^26.1.0",

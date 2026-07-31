@@ -6,6 +6,7 @@ import {
   action,
   createOptimisticStore,
   createSignal,
+  untrack,
 } from "solid-js";
 import { Link } from "@tanstack/solid-router";
 import { nanoid } from "nanoid";
@@ -14,6 +15,8 @@ import { api } from "../../convex/_generated/api";
 import { Icon, type IconName } from "../Icon";
 import { createMutation, createQuery, toError } from "../convex";
 import { useWorkspaces } from "../features/workspaces/context";
+import { useItems, type ItemInput } from "../features/items/context";
+import { useItemPanelRoute } from "../features/items/routing";
 import "./Areas.css";
 
 const areaIcons: IconName[] = [
@@ -28,6 +31,16 @@ const areaIcons: IconName[] = [
   "monitor",
   "leaf",
 ];
+const areaColors = [
+  "#5a45e5",
+  "#2f7dd3",
+  "#13a06a",
+  "#e29724",
+  "#e0526d",
+  "#8b55ce",
+  "#168f99",
+  "#d06736",
+];
 
 interface AreaInput {
   name: string;
@@ -38,6 +51,9 @@ interface AreaInput {
 
 export default function Areas() {
   const workspaces = useWorkspaces();
+  const items = useItems();
+  const panel = useItemPanelRoute();
+  const [view, setView] = createSignal<"grid" | "list">("grid");
   const [editor, setEditor] = createSignal<Doc<"areas"> | "new" | null>(null);
   const [archiveOpen, setArchiveOpen] = createSignal(false);
   const [deleteTarget, setDeleteTarget] = createSignal<Doc<"areas"> | null>(
@@ -162,10 +178,49 @@ export default function Areas() {
     queueMicrotask(() => setEditor(null));
   };
 
+  const moveInboxItem = (itemId: string, areaId: Id<"areas">) => {
+    const item = items.itemById(itemId);
+    if (!item || item.areaId !== null) return;
+    if (!item.type) {
+      panel.update({ item: item._id, mode: "edit", area: areaId });
+      return;
+    }
+    const input: ItemInput = {
+      title: item.title,
+      areaId,
+      type: item.type,
+      status: item.status ?? null,
+      priority: item.priority ?? null,
+      dueDate: item.dueDate ?? null,
+      amount: item.amount ?? null,
+      isSettled: item.isSettled ?? null,
+      description: item.description ?? null,
+      parentId: item.parentId,
+      tags: item.tags,
+    };
+    void items.updateItem(item._id, input);
+  };
+
   return (
     <section class="areas-page">
       <header class="areas-header">
         <div>
+          <div class="area-view-toggle" aria-label="Area view">
+            <button
+              class={{ active: view() === "grid" }}
+              aria-label="Grid view"
+              onClick={() => setView("grid")}
+            >
+              <Icon name="grid" size={16} />
+            </button>
+            <button
+              class={{ active: view() === "list" }}
+              aria-label="List view"
+              onClick={() => setView("list")}
+            >
+              <Icon name="list" size={16} />
+            </button>
+          </div>
           <span>{workspaces.activeWorkspace()?.name ?? "My Life"}</span>
           <h2>Areas</h2>
           <p>The parts of life you want to keep intentionally in view.</p>
@@ -222,12 +277,30 @@ export default function Areas() {
               </div>
             }
           >
-            <div class="areas-grid">
+            <div class={["areas-grid", `view-${view()}`]}>
               <For each={areas} keyed={(area) => area._id}>
                 {(area) => (
                   <article
                     class="area-item"
                     style={{ "--_deco-color": area().color }}
+                    onDragOver={(event) => {
+                      if (
+                        event.dataTransfer?.types.includes(
+                          "application/x-lifeos-item",
+                        )
+                      ) {
+                        event.preventDefault();
+                        if (event.dataTransfer)
+                          event.dataTransfer.dropEffect = "move";
+                      }
+                    }}
+                    onDrop={(event) => {
+                      event.preventDefault();
+                      const itemId = event.dataTransfer?.getData(
+                        "application/x-lifeos-item",
+                      );
+                      if (itemId) moveInboxItem(itemId, area()._id);
+                    }}
                   >
                     <Link
                       class="area-card-link"
@@ -251,6 +324,16 @@ export default function Areas() {
                       <Icon name={area().icon as IconName} />
                       <div>
                         <h3>{area().name}</h3>
+                        <small>
+                          {
+                            items.activeItems.filter(
+                              (item) =>
+                                item.areaId === area()._id &&
+                                item.parentId === null,
+                            ).length
+                          }{" "}
+                          Items
+                        </small>
                         <Show when={area().description}>
                           <p>{area().description}</p>
                         </Show>
@@ -318,6 +401,11 @@ function AreaEditor(props: {
   onClose: () => void;
   onSave: (input: AreaInput) => void;
 }) {
+  const initialArea = untrack(() => props.area);
+  const [icon, setIcon] = createSignal<IconName>(
+    (initialArea?.icon as IconName) ?? "folder",
+  );
+  const [color, setColor] = createSignal(initialArea?.color ?? areaColors[0]);
   const submit = (event: SubmitEvent) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget as HTMLFormElement);
@@ -352,6 +440,18 @@ function AreaEditor(props: {
           </button>
         </header>
         <form onSubmit={submit}>
+          <div
+            class="area-editor-preview"
+            style={{ "--_preview-color": color() }}
+          >
+            <span>
+              <Icon name={icon()} size={28} />
+            </span>
+            <div>
+              <small>Preview</small>
+              <strong>{props.area?.name || "Your new Area"}</strong>
+            </div>
+          </div>
           <label>
             <span>Name</span>
             <input
@@ -373,24 +473,49 @@ function AreaEditor(props: {
               {props.area?.description ?? ""}
             </textarea>
           </label>
-          <div class="area-form-row">
-            <label>
-              <span>Icon</span>
-              <select name="icon" value={props.area?.icon ?? "folder"}>
-                <For each={areaIcons}>
-                  {(icon) => <option value={icon}>{icon}</option>}
-                </For>
-              </select>
-            </label>
-            <label>
-              <span>Color</span>
-              <input
-                name="color"
-                type="color"
-                value={props.area?.color ?? "#5a45e5"}
-              />
-            </label>
-          </div>
+          <fieldset class="area-choice-field">
+            <legend>Icon</legend>
+            <input type="hidden" name="icon" value={icon()} />
+            <div class="area-icon-grid">
+              <For each={areaIcons}>
+                {(choice) => (
+                  <button
+                    type="button"
+                    class={{ active: icon() === choice }}
+                    aria-label={`Use ${choice} icon`}
+                    onClick={() => setIcon(choice)}
+                  >
+                    <Icon name={choice} size={18} />
+                  </button>
+                )}
+              </For>
+            </div>
+          </fieldset>
+          <fieldset class="area-choice-field">
+            <legend>Color</legend>
+            <input type="hidden" name="color" value={color()} />
+            <div class="area-color-grid">
+              <For each={areaColors}>
+                {(choice) => (
+                  <button
+                    type="button"
+                    class={{ active: color() === choice }}
+                    aria-label={`Use color ${choice}`}
+                    style={{ "--_choice": choice }}
+                    onClick={() => setColor(choice)}
+                  />
+                )}
+              </For>
+              <label class="custom-area-color">
+                <span>Custom</span>
+                <input
+                  type="color"
+                  value={color()}
+                  onInput={(event) => setColor(event.currentTarget.value)}
+                />
+              </label>
+            </div>
+          </fieldset>
           <footer>
             <button type="button" onClick={props.onClose}>
               Cancel
