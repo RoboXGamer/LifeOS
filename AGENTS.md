@@ -1,3 +1,9 @@
+## Codebase overview
+
+This is an early prototype of **Life OS**, a personal balance system intended to help people notice when important areas of life are being unintentionally neglected. The current UI is a sidebar-based single-page app: the Areas route renders a grid of life areas, while Today, Upcoming, Tags, and Archive are present as routed placeholders for future features.
+
+The frontend uses Solid 2 beta, TypeScript, Vite, and TanStack Solid Router. Convex provides the backend schema and functions for workspaces, areas, nested items, and a waitlist; the frontend also includes custom Solid 2-aware Convex query, mutation, action, and connection primitives, with the Areas screen already consuming live Convex data.
+
 ## Solid 2 beta: important
 
 Do not review or rewrite this code using Solid 1 assumptions. The local Solid 2 source, beta documentation, tests, and examples are the source of truth:

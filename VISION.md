@@ -1,4 +1,10 @@
-# my vision
+# Life OS product vision
+
+This document explains **why** Life OS exists and the product idea it should
+remain faithful to. See [`V1_SCOPE_REV2.md`](./V1_SCOPE_REV2.md) for the current
+domain model, user workflows, release scope, and explicit non-goals for V1.
+[`V1_SCOPE.md`](./V1_SCOPE.md) is retained as the original scope record.
+
 ## Problem Statement:
 
 
