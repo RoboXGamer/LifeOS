@@ -5,7 +5,6 @@ const convexUrl = import.meta.env.VITE_CONVEX_URL;
 if (!convexUrl) throw new Error("VITE_CONVEX_URL is not configured.");
 
 export const convex = new ConvexClient(convexUrl);
-export const WORKSPACE_ID = "jh76dypnzxqdx5h79whr09xr0s8anw4e";
 
 export function createConvexClient(
   address: string,

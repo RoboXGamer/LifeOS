@@ -1,6 +1,20 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
+const itemType = v.union(
+  v.literal("Task"),
+  v.literal("Note"),
+  v.literal("Event"),
+  v.literal("Expense"),
+  v.literal("Payment"),
+);
+
+const itemStatus = v.union(
+  v.literal("Todo"),
+  v.literal("In Progress"),
+  v.literal("Done"),
+);
+
 export default defineSchema({
   waitlist: defineTable({
     name: v.string(),
@@ -8,11 +22,32 @@ export default defineSchema({
     createdAt: v.number(),
   }).index("by_email", ["email"]),
 
-  workspaces: defineTable({
-    name: v.string(),
+  profiles: defineTable({
+    authUserId: v.string(),
+    username: v.optional(v.string()),
+    normalizedUsername: v.optional(v.string()),
+    email: v.optional(v.string()),
+    isAnonymous: v.boolean(),
+    role: v.union(v.literal("user"), v.literal("admin")),
+    suspended: v.boolean(),
+    activeWorkspaceId: v.optional(v.id("workspaces")),
+    usernameChangedAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
-  }),
+  })
+    .index("by_authUserId", ["authUserId"])
+    .index("by_normalizedUsername", ["normalizedUsername"])
+    .index("by_role", ["role"]),
+
+  workspaces: defineTable({
+    ownerId: v.optional(v.id("profiles")),
+    name: v.string(),
+    archived: v.optional(v.boolean()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_ownerId", ["ownerId"])
+    .index("by_ownerId_and_archived", ["ownerId", "archived"]),
 
   areas: defineTable({
     workspaceId: v.id("workspaces"),
@@ -23,29 +58,53 @@ export default defineSchema({
     archived: v.boolean(),
     createdAt: v.number(),
     updatedAt: v.number(),
-  }).index("by_workspace", ["workspaceId"]),
+  })
+    .index("by_workspaceId", ["workspaceId"])
+    .index("by_workspaceId_and_archived", ["workspaceId", "archived"]),
 
   items: defineTable({
     workspaceId: v.id("workspaces"),
     title: v.string(),
     areaId: v.union(v.id("areas"), v.null()),
-    color: v.string(),
-    type: v.string(),
-    status: v.optional(v.string()),
-    priority: v.optional(v.number()),
+    type: v.optional(itemType),
+    status: v.optional(itemStatus),
+    priority: v.optional(v.union(v.literal(1), v.literal(2), v.literal(3))),
     dueDate: v.optional(v.string()),
     amount: v.optional(v.number()),
     isSettled: v.optional(v.boolean()),
     description: v.optional(v.string()),
-    tags: v.array(v.string()),
     parentId: v.union(v.id("items"), v.null()),
     archived: v.boolean(),
-    favorite: v.boolean(),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
-    .index("by_area", ["areaId"])
-    .index("by_parent", ["parentId"])
-    .index("by_dueDate", ["dueDate"])
-    .index("by_area_archived", ["areaId", "archived"]),
+    .index("by_workspaceId", ["workspaceId"])
+    .index("by_workspaceId_and_areaId", ["workspaceId", "areaId"])
+    .index("by_workspaceId_and_archived", ["workspaceId", "archived"])
+    .index("by_areaId_and_archived", ["areaId", "archived"])
+    .index("by_parentId", ["parentId"])
+    .index("by_workspaceId_and_dueDate", ["workspaceId", "dueDate"]),
+
+  tags: defineTable({
+    workspaceId: v.id("workspaces"),
+    name: v.string(),
+    normalizedName: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_workspaceId", ["workspaceId"])
+    .index("by_workspaceId_and_normalizedName", [
+      "workspaceId",
+      "normalizedName",
+    ]),
+
+  itemTags: defineTable({
+    workspaceId: v.id("workspaces"),
+    itemId: v.id("items"),
+    tagId: v.id("tags"),
+    createdAt: v.number(),
+  })
+    .index("by_itemId", ["itemId"])
+    .index("by_tagId", ["tagId"])
+    .index("by_workspaceId_and_itemId", ["workspaceId", "itemId"])
+    .index("by_workspaceId_and_tagId", ["workspaceId", "tagId"]),
 });

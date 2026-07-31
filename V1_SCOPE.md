@@ -42,13 +42,13 @@ Children may have a different Item type from their parent.
 
 Every Item has one of five fixed types:
 
-| Type | Question it answers |
-|---|---|
-| Task | What do I need to do? |
-| Note | What do I need to remember? |
-| Event | When is something happening? |
-| Expense | What money went out? |
-| Payment | What money came in? |
+| Type    | Question it answers          |
+| ------- | ---------------------------- |
+| Task    | What do I need to do?        |
+| Note    | What do I need to remember?  |
+| Event   | When is something happening? |
+| Expense | What money went out?         |
+| Payment | What money came in?          |
 
 Tasks may have a status of `Todo`, `In Progress`, or `Done`. Notes and Events do
 not have task status. Expenses and Payments use a settled/pending value instead.

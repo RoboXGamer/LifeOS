@@ -1,15 +1,21 @@
 import { mutation } from "./_generated/server";
+import { requireAdmin, requireWorkspaceOwner } from "./lib/auth";
 
-export const seed = mutation({
+export const seedAreas = mutation({
+  args: {},
   handler: async (ctx) => {
-    const existing = await ctx.db.query("workspaces").first();
-    if (existing) return { status: "already_seeded" };
+    const profile = await requireAdmin(ctx);
+    if (!profile.activeWorkspaceId)
+      throw new Error("Select a Workspace first.");
+    await requireWorkspaceOwner(ctx, profile.activeWorkspaceId);
 
-    const workspaceId = await ctx.db.insert("workspaces", {
-      name: "My Life",
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    });
+    const existing = await ctx.db
+      .query("areas")
+      .withIndex("by_workspaceId", (q) =>
+        q.eq("workspaceId", profile.activeWorkspaceId!),
+      )
+      .first();
+    if (existing) return { status: "already_seeded" as const };
 
     const areas = [
       { name: "College", icon: "graduation", color: "#7654e8" },
@@ -19,17 +25,16 @@ export const seed = mutation({
       { name: "Personal", icon: "user", color: "#ed6977" },
       { name: "Health", icon: "leaf", color: "#16a6a3" },
     ];
-
-    for (const a of areas) {
+    const now = Date.now();
+    for (const area of areas) {
       await ctx.db.insert("areas", {
-        workspaceId,
-        ...a,
+        workspaceId: profile.activeWorkspaceId,
+        ...area,
         archived: false,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
+        createdAt: now,
+        updatedAt: now,
       });
     }
-
-    return { status: "seeded", workspaceId };
+    return { status: "seeded" as const };
   },
 });

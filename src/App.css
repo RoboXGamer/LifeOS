@@ -96,3 +96,29 @@ body {
   display: flex;
   flex-direction: column;
 }
+
+@media (max-width: 680px) {
+  #root {
+    --_margin: 0px;
+  }
+
+  #app {
+    border: 0;
+    border-radius: 0;
+    grid-template-columns: 62px minmax(0, 1fr);
+  }
+
+  .sidebar {
+    padding: 6px;
+  }
+
+  .nav-button {
+    width: 44px;
+    height: 44px;
+    border-radius: 13px;
+  }
+
+  .main {
+    padding: 18px 12px;
+  }
+}

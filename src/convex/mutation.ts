@@ -2,7 +2,11 @@ import { createSignal, useContext, type Accessor } from "solid-js";
 import { isServer } from "@solidjs/web";
 import { ConvexClient } from "convex/browser";
 import type { OptimisticUpdate } from "convex/browser";
-import type { FunctionArgs, FunctionReference, FunctionReturnType } from "convex/server";
+import type {
+  FunctionArgs,
+  FunctionReference,
+  FunctionReturnType,
+} from "convex/server";
 import { ConvexClientContext } from "./context";
 
 export type ConvexMutation<Mutation extends FunctionReference<"mutation">> = {
@@ -19,9 +23,12 @@ export function createMutation<Mutation extends FunctionReference<"mutation">>(
   const client = useContext(ConvexClientContext);
 
   if (!client) {
-    if (!isServer) throw new Error("createMutation must be used within ConvexProvider");
+    if (!isServer)
+      throw new Error("createMutation must be used within ConvexProvider");
     const stub = (async () => {
-      throw new Error("createMutation cannot execute during SSR without ConvexProvider");
+      throw new Error(
+        "createMutation cannot execute during SSR without ConvexProvider",
+      );
     }) as unknown as ConvexMutation<Mutation>;
     stub.withOptimisticUpdate = () => stub;
     stub.pending = () => false;
@@ -46,7 +53,8 @@ function buildMutation<Mutation extends FunctionReference<"mutation">>(
     return promise.finally(() => setInflight((n) => n - 1));
   }) as ConvexMutation<Mutation>;
 
-  call.withOptimisticUpdate = (update) => buildMutation(client, mutation, update);
+  call.withOptimisticUpdate = (update) =>
+    buildMutation(client, mutation, update);
   call.pending = () => inflight() > 0;
 
   return call;

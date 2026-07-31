@@ -13,6 +13,7 @@ export function ConvexProvider(props: ParentProps<{ client: ConvexClient }>) {
 
 export function useConvexClient(): ConvexClient {
   const client = useContext(ConvexClientContext);
-  if (!client) throw new Error("useConvexClient must be used within ConvexProvider");
+  if (!client)
+    throw new Error("useConvexClient must be used within ConvexProvider");
   return client;
 }

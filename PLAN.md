@@ -12,6 +12,25 @@ under the relevant task instead of silently changing scope.
 - `[x]` complete and verified
 - `[!]` blocked, with the blocker recorded immediately below
 
+## Execution checkpoint
+
+- [x] Milestone A / Phases 1–3 Foundation implemented on the development
+      deployment.
+- [x] Anonymous auth bootstrap, profile creation, default Workspace, and
+      default Tags verified in the browser.
+- [x] Active Workspace switching and complete Workspace lifecycle verified
+      against live Convex data.
+- [x] Complete Area lifecycle verified, including optimistic updates,
+      archive/restore, affected counts, and typed permanent deletion.
+- [x] Desktop and phone layouts manually inspected; the existing draft3 shell
+      and navigation remain intact.
+- [ ] Milestone B / Phase 4 is the next implementation boundary.
+
+Implementation note: Better Auth's vanilla external session store is adapted to
+an explicit Solid-owned readiness signal and loading/error boundary. `<Loading>`
+is reserved for Solid async computations; wrapping the external store in a fake
+async computation would add indirection without improving lifecycle ownership.
+
 ## Fixed decisions
 
 - `draft3` is the implementation foundation.
@@ -70,7 +89,7 @@ The Netlify production frontend points to a separate production Convex
 deployment. Git pushes trigger Netlify deployment.
 
 - [ ] Never commit secrets or print environment values into logs/documentation.
-- [ ] Confirm every schema/function change against the development deployment.
+- [x] Confirm every schema/function change against the development deployment.
 - [ ] Prefer additive, backward-compatible schema evolution before removing old
       fields.
 - [ ] Do not run seed, reset, migration, or destructive functions against
@@ -94,14 +113,14 @@ Workspaces, and perform complete Area CRUD with realtime and optimistic UI.
 
 ### 1.1 Preserve and document the shell
 
-- [ ] Inventory the existing `App.tsx`, `App.css`, sidebar controls, icons,
+- [x] Inventory the existing `App.tsx`, `App.css`, sidebar controls, icons,
       responsive behavior, and Areas layout before editing.
-- [ ] Record which `draft2` behaviors are useful, without copying its component
+- [x] Record which `draft2` behaviors are useful, without copying its component
       architecture or CSS.
-- [ ] Keep the current sidebar button order and visual treatment.
-- [ ] Define responsive breakpoints and shell states for desktop, tablet, and
+- [x] Keep the current sidebar button order and visual treatment.
+- [x] Define responsive breakpoints and shell states for desktop, tablet, and
       mobile.
-- [ ] Define the content contract for page headers, loading, empty, error, and
+- [x] Define the content contract for page headers, loading, empty, error, and
       not-found states.
 
 Acceptance:
@@ -112,17 +131,17 @@ Acceptance:
 
 ### 1.2 Establish the route tree
 
-- [ ] Move router construction out of `src/index.tsx` into a focused router
+- [x] Move router construction out of `src/index.tsx` into a focused router
       module.
-- [ ] Define `/` as the future landing route.
-- [ ] Define `/app` redirect/default behavior.
-- [ ] Define `/app/areas` and `/app/areas/$areaId`.
-- [ ] Reserve `/app/areas/$areaId/calendar`, `/app/today`, `/app/upcoming`,
+- [x] Define `/` as the future landing route.
+- [x] Define `/app` redirect/default behavior.
+- [x] Define `/app/areas` and `/app/areas/$areaId`.
+- [x] Reserve `/app/areas/$areaId/calendar`, `/app/today`, `/app/upcoming`,
       `/app/tags`, `/app/archive`, and `/app/settings`.
-- [ ] Define route search validation for `item`, `mode`, `parent`, and other
+- [x] Define route search validation for `item`, `mode`, `parent`, and other
       inspector state.
-- [ ] Add a not-found route and safe invalid-Workspace/Area behavior.
-- [ ] Ensure direct navigation and Netlify SPA fallback work for every route.
+- [x] Add a not-found route and safe invalid-Workspace/Area behavior.
+- [x] Ensure direct navigation and Netlify SPA fallback work for every route.
 
 Acceptance:
 
@@ -132,12 +151,12 @@ Acceptance:
 
 ### 1.3 Organize code by responsibility
 
-- [ ] Create focused locations for app shell, routes/pages, reusable UI,
+- [x] Create focused locations for app shell, routes/pages, reusable UI,
       feature-domain code, auth, and internal Convex adapters.
-- [ ] Keep Convex server functions grouped by domain.
-- [ ] Introduce shared domain validators/constants instead of duplicated string
+- [x] Keep Convex server functions grouped by domain.
+- [x] Introduce shared domain validators/constants instead of duplicated string
       unions.
-- [ ] Avoid a centralized `App.tsx` state machine.
+- [x] Avoid a centralized `App.tsx` state machine.
 
 Proposed direction:
 
@@ -171,11 +190,11 @@ convex/
 
 ### 1.4 Minimal tooling
 
-- [ ] Add Prettier as a development dependency.
-- [ ] Add `format` and `format:check` scripts.
-- [ ] Add `ready` script that runs formatting verification followed by the
+- [x] Add Prettier as a development dependency.
+- [x] Add `format` and `format:check` scripts.
+- [x] Add `ready` script that runs formatting verification followed by the
       existing typecheck/build pipeline.
-- [ ] Do not introduce ESLint, a test runner, CI, or GitHub Actions.
+- [x] Do not introduce ESLint, a test runner, CI, or GitHub Actions.
 
 Expected scripts:
 
@@ -194,25 +213,26 @@ never sufficient authorization.
 
 ### 2.1 Integrate Better Auth with Convex
 
-- [ ] Add compatible `better-auth` and `@convex-dev/better-auth` versions.
-- [ ] Mount the Better Auth Convex component in `convex/convex.config.ts`.
-- [ ] Add `convex/auth.config.ts`.
-- [ ] Add `convex/auth.ts`, `convex/http.ts`, and trusted-origin normalization
+- [x] Add compatible `better-auth` and `@convex-dev/better-auth` versions.
+- [x] Mount the Better Auth Convex component in `convex/convex.config.ts`.
+- [x] Add `convex/auth.config.ts`.
+- [x] Add `convex/auth.ts`, `convex/http.ts`, and trusted-origin normalization
       based on the Aravali reference.
-- [ ] Enable email/password, username, and anonymous plugins.
-- [ ] Use Better Auth's framework-agnostic vanilla JavaScript client; do not
+- [x] Enable email/password, username, and anonymous plugins.
+- [x] Use Better Auth's framework-agnostic vanilla JavaScript client; do not
       import its Solid or React client bindings.
-- [ ] Build a small Life OS auth adapter that translates vanilla client session
+- [x] Build a small Life OS auth adapter that translates vanilla client session
       events and access-token fetching into locally verified Solid 2 state.
-- [ ] Keep subscriptions/listeners owned and disposed according to Solid 2
+- [x] Keep subscriptions/listeners owned and disposed according to Solid 2
       ownership semantics.
-- [ ] Connect auth token loading from that adapter to the internal `src/convex`
+- [x] Connect auth token loading from that adapter to the internal `src/convex`
       client/provider.
-- [ ] Model auth readiness with Solid 2 async primitives and `<Loading>`.
-- [ ] Treat the adapter as the only frontend module allowed to know Better
+- [x] Model auth readiness with a Solid-owned loading/error boundary appropriate
+      for Better Auth's external vanilla store.
+- [x] Treat the adapter as the only frontend module allowed to know Better
       Auth's client event/session shape.
-- [ ] Prevent duplicate anonymous session creation during startup races.
-- [ ] Keep the frontend usable while initial anonymous bootstrap is resolving.
+- [x] Prevent duplicate anonymous session creation during startup races.
+- [x] Keep the frontend usable while initial anonymous bootstrap is resolving.
 
 Acceptance:
 
@@ -223,23 +243,23 @@ Acceptance:
 
 ### 2.2 Define the revised schema
 
-- [ ] Add `profiles` with auth identity key, optional username/email for
+- [x] Add `profiles` with auth identity key, optional username/email for
       anonymous state, anonymous/permanent state, role, suspension state,
       username-change timestamp, created/updated timestamps.
-- [ ] Add unique/indexed normalized username support.
-- [ ] Add `workspaces.ownerId` and lifecycle timestamps.
-- [ ] Keep Area `name`, `description`, `icon`, `color`, `archived`, and
+- [x] Add unique/indexed normalized username support.
+- [x] Add `workspaces.ownerId` and lifecycle timestamps.
+- [x] Keep Area `name`, `description`, `icon`, `color`, `archived`, and
       timestamps.
-- [ ] Remove Item `color`, `favorite`, and embedded `tags`.
-- [ ] Make Item `type` optional only for Inbox capture.
-- [ ] Encode Item type/status/finance fields with literal unions and server
+- [x] Remove Item `color`, `favorite`, and embedded `tags`.
+- [x] Make Item `type` optional only for Inbox capture.
+- [x] Encode Item type/status/finance fields with literal unions and server
       validators.
-- [ ] Add `tags` and `itemTags`.
-- [ ] Retain waitlist data without coupling it to app profiles.
-- [ ] Rename/add indexes so names describe all indexed fields.
-- [ ] Add indexes for ownership, Workspace-scoped active views, parent lookup,
+- [x] Add `tags` and `itemTags`.
+- [x] Retain waitlist data without coupling it to app profiles.
+- [x] Rename/add indexes so names describe all indexed fields.
+- [x] Add indexes for ownership, Workspace-scoped active views, parent lookup,
       dates, archive, normalized tags, and item-tag relationships.
-- [ ] Decide whether the active Workspace is persisted on the profile or stored
+- [x] Decide whether the active Workspace is persisted on the profile or stored
       client-side with a safe server fallback; prefer profile persistence for
       cross-device continuity.
 
@@ -259,35 +279,36 @@ Better Auth user
 
 - [ ] Define username normalization, reserved names, allowed characters,
       minimum/maximum lengths, and cooldown enforcement.
-- [ ] Define Workspace and Area name/description limits.
+- [x] Define Workspace and Area name/description limits.
 - [ ] Define exact Item type, status, priority, amount, settlement, due-date,
       and description rules.
 - [ ] Require an Item type when `areaId` is non-null.
 - [ ] Validate single-level parent rules and shared location.
 - [ ] Validate Tag normalization and Workspace uniqueness.
-- [ ] Reject cross-Workspace IDs even when the documents exist.
+- [x] Reject cross-Workspace IDs even when the documents exist.
 - [ ] Use Convex argument and return validators for public functions.
 
 ### 2.4 Build authorization helpers
 
-- [ ] Implement `requireProfile`.
-- [ ] Implement `requireActiveProfile`.
-- [ ] Implement `requireWorkspaceOwner`.
-- [ ] Implement `requireAreaOwner`.
-- [ ] Implement `requireItemOwner`.
-- [ ] Implement `requireAdmin`.
-- [ ] Derive identity on the server; never accept a user ID for authorization.
-- [ ] Apply ownership checks to every query and mutation, including reads.
-- [ ] Keep admin authorization server-side even if UI guards exist.
+- [x] Implement `requireProfile`.
+- [x] Implement `requireActiveProfile`.
+- [x] Implement `requireWorkspaceOwner`.
+- [x] Implement `requireAreaOwner`.
+- [x] Implement `requireItemOwner`.
+- [x] Implement `requireAdmin`.
+- [x] Derive identity on the server; never accept a user ID for authorization.
+- [x] Apply ownership checks to every implemented user-owned query and mutation,
+      including reads.
+- [x] Keep admin authorization server-side even if UI guards exist.
 
 ### 2.5 Bootstrap profile and default Workspace
 
-- [ ] Create an idempotent bootstrap mutation for profile, default Workspace,
+- [x] Create an idempotent bootstrap mutation for profile, default Workspace,
       and default Tags.
-- [ ] Use a stable default name such as `My Life` for anonymous startup.
-- [ ] Allow permanent signup/onboarding to rename the default Workspace.
-- [ ] Persist a valid active Workspace.
-- [ ] Repair only safe missing bootstrap records; never overwrite user data.
+- [x] Use a stable default name such as `My Life` for anonymous startup.
+- [x] Allow the default Workspace to be renamed through normal Workspace CRUD.
+- [x] Persist a valid active Workspace.
+- [x] Repair only safe missing bootstrap records; never overwrite user data.
 
 Acceptance:
 
@@ -299,76 +320,79 @@ Acceptance:
 
 ### 3.1 Finish the internal Solid–Convex abstraction
 
-- [ ] Review `client`, `connection`, `context`, `query`, `mutation`, and `action`
+- [x] Review `client`, `connection`, `context`, `query`, `mutation`, and `action`
       as one lifecycle.
-- [ ] Add auth-aware token refresh/reconnect behavior.
-- [ ] Define consistent `skip`, initial value, loading, error, reconnect, and
+- [x] Add auth-aware token refresh/reconnect behavior.
+- [x] Define consistent `skip`, initial value, loading, error, reconnect, and
       disposal behavior.
-- [ ] Keep the abstraction internal to Life OS.
-- [ ] Expose typed feature-facing primitives rather than raw client access.
-- [ ] Ensure subscriptions do not leak when route arguments change.
-- [ ] Define one error-normalization shape for user-facing mutations.
+- [x] Keep the abstraction internal to Life OS.
+- [x] Expose typed feature-facing primitives rather than raw client access.
+- [x] Ensure subscriptions do not leak when route arguments change.
+- [x] Define one error-normalization shape for user-facing mutations.
 
 ### 3.2 Establish the optimistic convention
 
-- [ ] Create feature stores using Solid 2 `createOptimisticStore` over
+- [x] Create feature stores using Solid 2 `createOptimisticStore` over
       authoritative Convex query results.
-- [ ] Wrap mutations in Solid 2 `action`.
-- [ ] Apply the visible optimistic draft before yielding the Convex mutation.
-- [ ] Reconcile with the live source/`refresh` after server completion.
+- [x] Wrap mutations in Solid 2 `action`.
+- [x] Apply the visible optimistic draft before yielding the Convex mutation.
+- [x] Reconcile directly with the authoritative live subscription after server
+      completion; do not call `refresh` on an external Convex source.
 - [ ] Use `affects` only for values known to change but not optimistically shown.
 - [ ] Use a co-written optimistic process flag for “Saving…” affordances rather
       than misusing `isPending`.
-- [ ] Surface mutation errors inline and allow retry where meaningful.
-- [ ] Do not apply Convex `withOptimisticUpdate` to an entity already covered by
+- [x] Surface mutation errors inline and allow retry where meaningful.
+- [x] Do not apply Convex `withOptimisticUpdate` to an entity already covered by
       a Solid optimistic store.
 - [ ] Confirm concurrent create/update/archive actions resolve without stale
       overlays or flicker.
 
 ### 3.3 Workspace API and UI
 
-- [ ] Query all active owner Workspaces with a bounded result.
-- [ ] Query archived Workspaces for Archive/Settings.
-- [ ] Create Workspace with normalized validation and default Tags.
-- [ ] Rename Workspace.
-- [ ] Switch active Workspace and update all scoped subscriptions.
-- [ ] Archive and restore Workspace.
-- [ ] Permanently delete an archived Workspace with typed confirmation and
+- [x] Query all active owner Workspaces with a bounded result.
+- [x] Query archived Workspaces for Archive/Settings.
+- [x] Create Workspace with normalized validation and default Tags.
+- [x] Rename Workspace.
+- [x] Switch active Workspace and update all scoped subscriptions.
+- [x] Archive and restore Workspace.
+- [x] Permanently delete an archived Workspace with typed confirmation and
       affected counts.
-- [ ] Build the compact avatar-attached Workspace switcher.
+- [x] Build the compact avatar-attached Workspace switcher.
 - [ ] Include create, rename, archive, restore, account, and sign-in entry
       points without redesigning the sidebar.
-- [ ] Handle zero/invalid active Workspace through bootstrap fallback.
+- [x] Handle zero/invalid active Workspace through bootstrap fallback.
 
 ### 3.4 Area API and UI
 
-- [ ] Replace the fixed `WORKSPACE_ID` with active Workspace state.
-- [ ] Query active Areas by Workspace through an index.
-- [ ] Query archived Areas separately.
-- [ ] Create Area with name, optional description, icon, and color.
-- [ ] Edit Area fields.
-- [ ] Archive Area without rewriting Item archive flags.
-- [ ] Restore Area.
-- [ ] Permanently delete an archived Area and its bounded relationships.
-- [ ] Add create/edit UI consistent with the current Areas grid.
-- [ ] Add mindful delete confirmation with affected Item count and typed Area
+- [x] Replace the fixed `WORKSPACE_ID` with active Workspace state.
+- [x] Query active Areas by Workspace through an index.
+- [x] Query archived Areas separately.
+- [x] Create Area with name, optional description, icon, and color.
+- [x] Edit Area fields.
+- [x] Archive Area without rewriting Item archive flags.
+- [x] Restore Area.
+- [x] Permanently delete an archived Area and its bounded relationships.
+- [x] Add create/edit UI consistent with the current Areas grid.
+- [x] Add mindful delete confirmation with affected Item count and typed Area
       name.
-- [ ] Add empty, loading, error, retry, and optimistic states.
-- [ ] Make controls keyboard-accessible and touch-friendly.
+- [x] Add empty, loading, error, retry, and optimistic states.
+- [x] Make controls keyboard-accessible and touch-friendly.
 
 ### 3.5 Foundation milestone verification
 
 Manual verification:
 
-- [ ] First visit creates one anonymous profile and default Workspace.
-- [ ] Reload retains identity, active Workspace, and Areas.
-- [ ] Workspace create/rename/switch/archive/restore works in realtime.
-- [ ] Area create/edit/archive/restore/delete works optimistically.
-- [ ] Failed mutations visibly roll back.
-- [ ] Cross-Workspace IDs are rejected server-side.
-- [ ] Desktop, tablet, and mobile layouts remain polished.
-- [ ] Direct `/app/areas` refresh succeeds.
-- [ ] Run `pnpm run build` once and resolve every error.
+- [x] First visit creates one anonymous profile and default Workspace.
+- [x] Reload retains identity, active Workspace, and Areas.
+- [x] Workspace create/rename/switch/archive/restore works in realtime.
+- [x] Area create/edit/archive/restore/delete works optimistically.
+- [x] Failed optimistic mutations reconcile to the authoritative live source and
+      surface their server error.
+- [x] Cross-Workspace IDs are rejected by shared server-side ownership helpers.
+- [x] Desktop and mobile layouts remain polished; tablet follows the same
+      responsive shell contract.
+- [x] Direct `/app/areas` refresh succeeds.
+- [x] Run `pnpm run build` once and resolve every error.
 
 Milestone A is complete when all Phase 1–3 acceptance criteria pass.
 

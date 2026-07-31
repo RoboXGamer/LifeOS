@@ -9,7 +9,9 @@ interface AvatarProps {
 }
 
 function Avatar(props: AvatarProps) {
-  const [status, setStatus] = createSignal<"loading" | "loaded" | "error">("loading");
+  const [status, setStatus] = createSignal<"loading" | "loaded" | "error">(
+    "loading",
+  );
   const size = () => props.size ?? 24;
 
   onSettled(() => {

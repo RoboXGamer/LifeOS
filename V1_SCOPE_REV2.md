@@ -105,13 +105,13 @@ affected count and requires typing the Area name.
 
 Everything captured or stored is an Item. V1 has five fixed types:
 
-| Type | Purpose |
-|---|---|
-| Task | Something to do |
-| Note | Something to remember |
-| Event | Something happening at a time |
-| Expense | Money going out |
-| Payment | Money coming in |
+| Type    | Purpose                       |
+| ------- | ----------------------------- |
+| Task    | Something to do               |
+| Note    | Something to remember         |
+| Event   | Something happening at a time |
+| Expense | Money going out               |
+| Payment | Money coming in               |
 
 A newly captured Inbox Item may have no type. Before an Item leaves Inbox for an
 Area, it must have a type.

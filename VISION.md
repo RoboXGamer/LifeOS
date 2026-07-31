@@ -7,7 +7,6 @@ domain model, user workflows, release scope, and explicit non-goals for V1.
 
 ## Problem Statement:
 
-
 > We don't usually fail because we don't know what matters.
 
 We fail because we slowly stop noticing what we've unintentionally neglected.
@@ -25,8 +24,6 @@ Or we've spent weeks helping everyone else while making no progress toward our o
 Life doesn't fall apart in one day.
 
 It drifts out of balance one unnoticed day at a time.
-
-
 
 ---
 
@@ -48,10 +45,7 @@ Because a good life isn't built by maximizing one area.
 
 It's built by intentionally balancing many.
 
-
-
 ---
-
 
 > Life isn't supposed to be perfectly balanced every day.
 
@@ -71,13 +65,11 @@ Life OS helps you see the difference.
 
 Life OS helps you build clarity.
 
-
 ---
 
-Like Notion's tagline is 
+Like Notion's tagline is
 
 > "Everything in one place."
-
 
 For Life OS, I think people should remember:
 

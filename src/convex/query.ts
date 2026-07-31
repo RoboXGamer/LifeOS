@@ -1,9 +1,18 @@
 import { createMemo, onCleanup, useContext, type Accessor } from "solid-js";
 import { isServer } from "@solidjs/web";
 import { ConvexHttpClient } from "convex/browser";
-import type { FunctionArgs, FunctionReference, FunctionReturnType } from "convex/server";
+import type {
+  FunctionArgs,
+  FunctionReference,
+  FunctionReturnType,
+} from "convex/server";
 import { ConvexClientContext } from "./context";
-import { resolveValue, toError, type CreateQueryOptions, type MaybeAccessor } from "./utils";
+import {
+  resolveValue,
+  toError,
+  type CreateQueryOptions,
+  type MaybeAccessor,
+} from "./utils";
 
 export async function prefetchQuery<Query extends FunctionReference<"query">>(
   client: ConvexHttpClient,
@@ -16,7 +25,10 @@ export async function prefetchQuery<Query extends FunctionReference<"query">>(
 function hasOwnInitialValue<T>(
   options: CreateQueryOptions<T> | undefined,
 ): options is CreateQueryOptions<T> & { initialValue: T } {
-  return options != null && Object.prototype.hasOwnProperty.call(options, "initialValue");
+  return (
+    options != null &&
+    Object.prototype.hasOwnProperty.call(options, "initialValue")
+  );
 }
 
 function syncThenable<T>(value: T): PromiseLike<T> {
@@ -40,13 +52,13 @@ export function createQuery<Query extends FunctionReference<"query">>(
 
   const hasInitialValue = hasOwnInitialValue(options);
   const initialValue = hasInitialValue ? options.initialValue : undefined;
-  const ssrSource = options?.ssrSource ?? (hasInitialValue ? "initial" : undefined);
 
   let activeDispose: (() => void) | undefined;
 
   const value = createMemo<FunctionReturnType<Query> | undefined>(
     () => {
-      if (!client) throw new Error("createQuery must be used within ConvexProvider");
+      if (!client)
+        throw new Error("createQuery must be used within ConvexProvider");
 
       activeDispose?.();
 
@@ -55,23 +67,31 @@ export function createQuery<Query extends FunctionReference<"query">>(
       if (queryArgs === "skip") {
         activeDispose = undefined;
         let yielded = false;
-        return ({
+        return {
           [Symbol.asyncIterator]() {
             return {
               next() {
                 if (yielded) {
-                  return syncThenable({ value: undefined as FunctionReturnType<Query>, done: true });
+                  return syncThenable({
+                    value: undefined as FunctionReturnType<Query>,
+                    done: true,
+                  });
                 }
                 yielded = true;
-                return syncThenable({ value: undefined as FunctionReturnType<Query>, done: false });
+                return syncThenable({
+                  value: undefined as FunctionReturnType<Query>,
+                  done: false,
+                });
               },
             };
           },
-        }) as unknown as FunctionReturnType<Query> | undefined;
+        } as unknown as FunctionReturnType<Query> | undefined;
       }
 
       const queue: FunctionReturnType<Query>[] = [];
-      let nextResolve: ((result: IteratorResult<FunctionReturnType<Query>>) => void) | null = null;
+      let nextResolve:
+        | ((result: IteratorResult<FunctionReturnType<Query>>) => void)
+        | null = null;
       let nextReject: ((reason?: unknown) => void) | null = null;
       let pendingError: Error | null = null;
       let closed = false;
@@ -109,7 +129,10 @@ export function createQuery<Query extends FunctionReference<"query">>(
         closed = true;
         unsubscribe.unsubscribe();
         if (nextResolve) {
-          nextResolve({ value: undefined as FunctionReturnType<Query>, done: true });
+          nextResolve({
+            value: undefined as FunctionReturnType<Query>,
+            done: true,
+          });
           nextResolve = null;
           nextReject = null;
         }
@@ -119,6 +142,9 @@ export function createQuery<Query extends FunctionReference<"query">>(
       };
       activeDispose = disposeQuery;
 
+      if (hasInitialValue && initialValue !== undefined) {
+        queue.push(initialValue as FunctionReturnType<Query>);
+      }
       const currentValue = unsubscribe.getCurrentValue();
       if (currentValue !== undefined) {
         queue.push(currentValue);
@@ -126,7 +152,7 @@ export function createQuery<Query extends FunctionReference<"query">>(
 
       onCleanup(disposeQuery);
 
-      return ({
+      return {
         [Symbol.asyncIterator]() {
           return {
             next() {
@@ -139,7 +165,10 @@ export function createQuery<Query extends FunctionReference<"query">>(
                 return syncThenable({ value: queue.shift()!, done: false });
               }
               if (closed) {
-                return syncThenable({ value: undefined as FunctionReturnType<Query>, done: true });
+                return syncThenable({
+                  value: undefined as FunctionReturnType<Query>,
+                  done: true,
+                });
               }
               return new Promise((resolve, reject) => {
                 nextResolve = resolve;
@@ -148,16 +177,17 @@ export function createQuery<Query extends FunctionReference<"query">>(
             },
             return() {
               disposeQuery();
-              return syncThenable({ value: undefined as FunctionReturnType<Query>, done: true });
+              return syncThenable({
+                value: undefined as FunctionReturnType<Query>,
+                done: true,
+              });
             },
           };
         },
-      }) as unknown as FunctionReturnType<Query> | undefined;
+      } as unknown as FunctionReturnType<Query> | undefined;
     },
-    initialValue,
     {
       name: "convex-query",
-      ssrSource,
     },
   );
 

@@ -1,11 +1,12 @@
 import { createSignal, For } from "solid-js";
 import "./App.css";
 import { Icon } from "./Icon.tsx";
-import Avatar from "./Avatar.tsx";
 import { Outlet, Link, useLocation } from "@tanstack/solid-router";
+import { WorkspaceProvider } from "./features/workspaces/context";
+import { WorkspaceMenu } from "./features/workspaces/WorkspaceMenu";
 
 const navItems = [
-  { id: "", label: "Areas", icon: "grid" },
+  { id: "areas", label: "Areas", icon: "grid" },
   { id: "today", label: "Today", icon: "checkSquare" },
   { id: "upcoming", label: "Upcoming", icon: "calendar" },
   { id: "tags", label: "Tags", icon: "tag" },
@@ -13,6 +14,14 @@ const navItems = [
 ] as const;
 
 function App() {
+  return (
+    <WorkspaceProvider>
+      <AppShell />
+    </WorkspaceProvider>
+  );
+}
+
+function AppShell() {
   const [inboxOpen, toggleInbox] = createSignal(false);
   const location = useLocation();
   return (
@@ -35,18 +44,20 @@ function App() {
                 <Link
                   class={[
                     "nav-button" +
-                      ("/" + item.id === location().pathname ? " active" : ""),
+                      (`/app/${item.id}` === location().pathname
+                        ? " active"
+                        : ""),
                   ]}
                   aria-label={item.label}
                   title={item.label}
-                  to={"/" + item.id}
+                  to={`/app/${item.id}`}
                 >
                   <Icon name={item.icon} size={22} />
                 </Link>
               )}
             </For>
           </nav>
-          <Avatar size={40} fallback="PR" />
+          <WorkspaceMenu />
         </aside>
         <main class="main">
           <Outlet />

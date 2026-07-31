@@ -1,7 +1,16 @@
 allowBuilds:
   esbuild: true
 minimumReleaseAgeExclude:
-  - vite-plugin-solid@3.0.0-next.10
-  - '@solidjs/signals@2.0.0-beta.24'
-  - '@solidjs/web@2.0.0-beta.24'
-  - solid-js@2.0.0-beta.24
+  - vite-plugin-solid@3.0.0-next.10 || 3.0.0-next.21
+  - "@solidjs/signals@2.0.0-beta.24 || 2.0.0-beta.29"
+  - "@solidjs/web@2.0.0-beta.24 || 2.0.0-beta.29"
+  - solid-js@2.0.0-beta.24 || 2.0.0-beta.29
+  - "@dom-expressions/babel-plugin-jsx@0.50.0-next.34"
+  - "@dom-expressions/compiler-darwin-arm64@0.50.0-next.34"
+  - "@dom-expressions/compiler-darwin-x64@0.50.0-next.34"
+  - "@dom-expressions/compiler-linux-arm64-gnu@0.50.0-next.34"
+  - "@dom-expressions/compiler-linux-x64-gnu@0.50.0-next.34"
+  - "@dom-expressions/compiler-wasm32-wasi@0.50.0-next.34"
+  - "@dom-expressions/compiler-win32-x64-msvc@0.50.0-next.34"
+  - "@dom-expressions/compiler@0.50.0-next.34"
+  - babel-preset-solid@2.0.0-beta.29
