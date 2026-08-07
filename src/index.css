@@ -10,16 +10,14 @@
   --sans: system-ui, "Segoe UI", Roboto, sans-serif;
 
   scroll-behavior: smooth;
-  font: 18px/145% var(--sans);
+  font-family: var(--sans);
+  font-size: 100%;
+  line-height: 1.45;
   color-scheme: light;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
 }
 
 img,
@@ -67,6 +65,105 @@ p {
   text-wrap: pretty;
 }
 
+body,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+li,
+.fluid,
+textarea,
+input,
+select,
+button,
+th,
+td {
+  --fl: 0;
+  --font-size-min: 14;
+  --font-size-max: 20;
+  --font-ratio-min: 1.25;
+  --font-ratio-max: 1.3333333333333333;
+  --font-width-min: 320;
+  --font-width-max: 1500;
+  --fluid-min: calc(
+    var(--font-size-min) * pow(var(--font-ratio-min), var(--fl, 0))
+  );
+  --fluid-max: calc(
+    var(--font-size-max) * pow(var(--font-ratio-max), var(--fl, 0))
+  );
+  --fluid-preferred: calc(
+    (var(--fluid-max) - var(--fluid-min)) /
+      (var(--font-width-max) - var(--font-width-min))
+  );
+  --fluid-type: clamp(
+    (var(--fluid-min) / 16) * 1rem,
+    ((var(--fluid-min) / 16) * 1rem) -
+      (((var(--fluid-preferred) * var(--font-width-min)) / 16) * 1rem) +
+      (var(--fluid-preferred) * var(--variable-unit, 100vi)),
+    (var(--fluid-max) / 16) * 1rem
+  );
+  font-size: var(--fluid-type);
+}
+
+/* Use container width instead of viewport width for fluid descendants. */
+.fluid-text-container {
+  container-type: inline-size;
+  --variable-unit: 100cqi;
+}
+
+h1,
+.h1 {
+  --fl: 5;
+}
+h2,
+.h2 {
+  --fl: 4;
+}
+h3,
+.h3 {
+  --fl: 3;
+}
+h4,
+.h4 {
+  --fl: 2;
+}
+h5,
+.h5 {
+  --fl: 1;
+}
+h6,
+.h6,
+p,
+li,
+body,
+.fs-base {
+  --fl: 0;
+}
+.fs-xs {
+  --fl: -1;
+}
+.fs-s {
+  --fl: 1;
+}
+.fs-m {
+  --fl: 2;
+}
+.fs-l {
+  --fl: 3;
+}
+.fs-xl {
+  --fl: 4;
+}
+.fs-xxl {
+  --fl: 5;
+}
+.fs-xxxl {
+  --fl: 6;
+}
+
 :focus-visible {
   outline: 2px solid currentColor;
   outline-offset: 3px;
@@ -80,14 +177,12 @@ p {
 
 body:has(.landing-page) {
   min-width: 320px;
-  min-height: 100vh;
   overflow-x: hidden;
   background: #f8f9fd;
 }
 
 #root:has(.landing-page) {
   --_margin: 0px;
-  min-height: 100vh;
   height: auto;
   font-family: "DM Sans", "Segoe UI", sans-serif;
 }

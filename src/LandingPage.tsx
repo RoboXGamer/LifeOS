@@ -38,32 +38,6 @@ const features: Array<{
   },
 ];
 
-const steps: Array<{
-  number: string;
-  icon: IconName;
-  title: string;
-  body: string;
-}> = [
-  {
-    number: "01",
-    icon: "sparkle",
-    title: "Capture",
-    body: "Save what is on your mind before it gets lost.",
-  },
-  {
-    number: "02",
-    icon: "folder",
-    title: "Organize",
-    body: "Give it an Area, type, date, and the context it needs.",
-  },
-  {
-    number: "03",
-    icon: "checkSquare",
-    title: "Act",
-    body: "See the right things at the right time and make progress.",
-  },
-];
-
 const showcases = [
   {
     image: "/screenshots/2.png",
@@ -144,102 +118,26 @@ export function LandingPage() {
             </span>
             <span>Life OS</span>
           </a>
-          <div class="landing-nav-links">
-            <a href="#features">Features</a>
-            <a href="#how-it-works">How it works</a>
-            <a href="#product">Product</a>
-          </div>
-          <div class="landing-nav-actions">
-            <a class="landing-button landing-button-small" href="#waitlist">
-              Join waitlist <span aria-hidden="true">→</span>
-            </a>
-          </div>
         </nav>
       </header>
 
       <section class="landing-hero landing-container" id="top">
         <div class="hero-copy">
-          <div class="landing-kicker">
-            <Icon name="sparkle" size={16} /> Your life. Organized.
-          </div>
           <h1>
-            A personal OS for your <span>whole life.</span>
+            Everything you’re managing. <span>One place for it all.</span>
           </h1>
           <p class="hero-lede">
-            Capture what matters, organize every part of your life, and plan
-            your time with clarity—without stitching together five different
-            apps.
+            Capture anything, organize it into areas that matter, and plan your
+            time with clarity — without juggling multiple apps.
           </p>
-          <div class="hero-pills" aria-label="Life areas">
-            <span>
-              <Icon name="graduation" size={15} /> College
-            </span>
-            <span>
-              <Icon name="briefcase" size={15} /> Work
-            </span>
-            <span>
-              <Icon name="folder" size={15} /> Projects
-            </span>
-            <span>
-              <Icon name="heartPulse" size={15} /> Health
-            </span>
-          </div>
-          <div class="hero-actions">
-            <a class="landing-button" href="#waitlist">
-              Get early access <span aria-hidden="true">→</span>
-            </a>
-            <a class="landing-secondary" href="#product">
-              <span class="play-icon">▶</span> See how it works
-            </a>
-          </div>
-          <div class="hero-trust">
-            <div class="trust-faces" aria-hidden="true">
-              <span>J</span>
-              <span>M</span>
-              <span>A</span>
-            </div>
-            <div>
-              <strong>Built for real life</strong>
-              <small>One thoughtful system, every part of you.</small>
-            </div>
-          </div>
         </div>
 
         <div class="hero-visual" aria-label="Life OS Areas dashboard preview">
-          <div class="hero-orbit orbit-one">
-            <Icon name="checkSquare" size={21} />
-          </div>
-          <div class="hero-orbit orbit-two">
-            <Icon name="calendar" size={21} />
-          </div>
           <div class="product-window product-window-hero">
-            <div class="window-bar">
-              <i />
-              <i />
-              <i />
-              <span>Life OS</span>
-            </div>
             <img
               src="/screenshots/1.png"
               alt="Life OS Areas dashboard showing six organized life areas"
             />
-          </div>
-          <div class="hero-float-card float-capture">
-            <span class="float-icon">
-              <Icon name="sparkle" size={18} />
-            </span>
-            <div>
-              <strong>Quick Capture</strong>
-              <small>Thought saved to Inbox</small>
-            </div>
-            <span class="float-check">✓</span>
-          </div>
-          <div class="hero-float-card float-week">
-            <span class="float-date">15</span>
-            <div>
-              <strong>Your week is ready</strong>
-              <small>4 items planned</small>
-            </div>
           </div>
         </div>
       </section>
@@ -262,35 +160,6 @@ export function LandingPage() {
             </article>
           )}
         </For>
-      </section>
-
-      <section class="flow-section" id="how-it-works">
-        <div class="landing-container">
-          <div class="section-heading centered-heading">
-            <span class="section-eyebrow">A better flow</span>
-            <h2>Less chaos. More clarity.</h2>
-            <p>A simple rhythm that helps you focus on what counts.</p>
-          </div>
-          <div class="flow-track">
-            <For each={steps}>
-              {(step, index) => (
-                <article class="flow-step">
-                  <span class="flow-number">{step.number}</span>
-                  <span class="flow-icon">
-                    <Icon name={step.icon} size={28} />
-                  </span>
-                  <h3>{step.title}</h3>
-                  <p>{step.body}</p>
-                  <Show when={index() < steps.length - 1}>
-                    <span class="flow-arrow" aria-hidden="true">
-                      →
-                    </span>
-                  </Show>
-                </article>
-              )}
-            </For>
-          </div>
-        </div>
       </section>
 
       <section class="product-section landing-container" id="product">
@@ -360,20 +229,9 @@ export function LandingPage() {
 
       <section class="waitlist-section landing-container" id="waitlist">
         <div class="waitlist-copy">
-          <span class="waitlist-spark">
-            <Icon name="sparkle" size={30} />
-          </span>
           <span class="section-eyebrow">Early access</span>
-          <h2>Your life deserves one clear system.</h2>
-          <p>
-            Join the waitlist to be among the first to shape Life OS and receive
-            private beta access.
-          </p>
-          <div class="waitlist-notes">
-            <span>✓ No spam</span>
-            <span>✓ Early product updates</span>
-            <span>✓ Founding member access</span>
-          </div>
+          <h2>One place for everything is coming.</h2>
+          <p>Join the waitlist to hear when it's ready.</p>
         </div>
 
         <div class="waitlist-card">
@@ -431,10 +289,6 @@ export function LandingPage() {
                     <span aria-hidden="true">→</span>
                   </Show>
                 </button>
-                <small class="privacy-note">
-                  By joining, you agree to receive occasional Life OS product
-                  updates.
-                </small>
               </form>
             }
           >
@@ -455,20 +309,6 @@ export function LandingPage() {
           </Show>
         </div>
       </section>
-
-      <footer class="landing-footer landing-container">
-        <a class="landing-brand" href="#top">
-          <span class="landing-logo">
-            <Icon name="sparkle" size={18} />
-          </span>
-          <span>Life OS</span>
-        </a>
-        <p>One place for the life you’re building.</p>
-        <div>
-          <a href="#features">Features</a>
-          <a href="#product">Product</a>
-        </div>
-      </footer>
     </main>
   );
 }
