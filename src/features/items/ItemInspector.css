@@ -27,7 +27,7 @@
   }
 }
 
-@media (min-width: 1181px) {
+@media (min-width: 681px) {
   .item-inspector-backdrop {
     position: relative;
     z-index: auto;

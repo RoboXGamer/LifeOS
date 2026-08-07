@@ -98,13 +98,13 @@ body {
   grid-column: 2;
   grid-row: 1;
   min-width: 0;
-  padding: 24px 16px;
+  padding: 10px 16px;
   min-height: 0;
   display: flex;
   flex-direction: column;
 }
 
-@media (min-width: 1181px) {
+@media (min-width: 681px) {
   #app {
     grid-template-columns: 80px 0 minmax(0, 1fr) 0;
   }
@@ -119,17 +119,29 @@ body {
 
   #app.inbox-open.inspector-open {
     grid-template-columns:
-      72px minmax(270px, 310px) minmax(0, 1fr)
+      80px minmax(290px, 340px) minmax(0, 1fr)
       minmax(340px, 380px);
   }
 
   #app.inbox-open.inspector-open .sidebar {
-    padding-inline: 4px;
+    padding-inline: 8px;
   }
 
-  #app.inbox-open.inspector-open .nav-button {
-    width: 46px;
-    height: 46px;
+  #app:has(.area-inspector-host .area-dialog) {
+    grid-template-columns: 80px 0 minmax(0, 1fr) minmax(360px, 400px);
+  }
+
+  #app.inbox-open:has(.area-inspector-host .area-dialog) {
+    grid-template-columns:
+      80px minmax(290px, 340px) minmax(0, 1fr)
+      minmax(340px, 380px);
+  }
+
+  .area-inspector-host {
+    grid-column: 4;
+    grid-row: 1;
+    min-width: 0;
+    overflow: hidden;
   }
 
   .inbox-host {

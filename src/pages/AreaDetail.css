@@ -142,28 +142,6 @@
   color: hsl(225 12% 46%);
   font-size: 0.61rem;
 }
-.area-metrics {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
-}
-.area-metrics article {
-  display: flex;
-  align-items: baseline;
-  gap: 7px;
-  padding: 10px 12px;
-  border: 1px solid var(--color-border);
-  border-radius: 11px;
-  color: hsl(225 16% 37%);
-  background: rgb(255 255 255 / 82%);
-  text-align: left;
-}
-.area-metrics strong {
-  font-size: 1rem;
-}
-.area-metrics span {
-  font-size: 0.59rem;
-}
 .area-detail-error {
   padding: 9px 12px;
   border: 1px solid #f2bdc7;
@@ -539,10 +517,6 @@
   }
   .area-summary-copy p {
     font-size: 0.68rem;
-  }
-  .area-metrics {
-    grid-template-columns: repeat(5, minmax(75px, 1fr));
-    overflow-x: auto;
   }
 }
 

@@ -152,7 +152,6 @@ export function InboxPanel(props: {
                 }}
                 onDragEnd={() => setDragging(false)}
                 onClick={() => {
-                  props.onClose(false);
                   panel.openItem(item()._id);
                 }}
               >

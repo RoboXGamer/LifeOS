@@ -61,8 +61,6 @@ export default function AreaDetail() {
       return matchesType && matchesSearch;
     });
   };
-  const count = (itemType: ItemType) =>
-    allAreaItems().filter((item) => item.type === itemType).length;
   const toggleExpanded = (itemId: string) => {
     setExpanded((current) => {
       const next = new Set(current);
@@ -108,6 +106,10 @@ export default function AreaDetail() {
     } catch (reason) {
       setError(toError(reason).message);
     }
+  };
+  const openAreaEditor = () => {
+    panel.close();
+    setEditingArea(true);
   };
   const row = (
     item: ItemView,
@@ -260,7 +262,7 @@ export default function AreaDetail() {
                 <span>{currentArea().name}</span>
               </div>
               <div class="area-detail-actions">
-                <button type="button" onClick={() => setEditingArea(true)}>
+                <button type="button" onClick={openAreaEditor}>
                   <Icon name="edit" size={17} /> Edit Area
                 </button>
                 <Link
@@ -309,17 +311,6 @@ export default function AreaDetail() {
                 <span>Total Items</span>
               </div>
             </section>
-
-            <div class="area-metrics">
-              <For each={types.slice(1) as ItemType[]}>
-                {(itemType) => (
-                  <article>
-                    <strong>{count(itemType)}</strong>
-                    <span>{itemType}s</span>
-                  </article>
-                )}
-              </For>
-            </div>
 
             <div class="area-toolbar">
               <label>

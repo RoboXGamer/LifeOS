@@ -392,39 +392,6 @@
   padding: 18px 20px 20px;
 }
 
-.area-editor-preview {
-  --_preview-color: var(--color-purple);
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  padding: 12px;
-  border: 1px solid color-mix(in srgb, var(--_preview-color) 25%, white);
-  border-radius: 13px;
-  background: color-mix(in srgb, var(--_preview-color) 7%, white);
-}
-.area-editor-preview > span {
-  width: 46px;
-  height: 46px;
-  display: grid;
-  place-items: center;
-  border-radius: 13px;
-  color: var(--_preview-color);
-  background: color-mix(in srgb, var(--_preview-color) 14%, white);
-}
-.area-editor-preview > div {
-  display: grid;
-  gap: 2px;
-}
-.area-editor-preview small {
-  color: var(--_preview-color);
-  font-size: 0.56rem;
-  font-weight: 800;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-}
-.area-editor-preview strong {
-  font-size: 0.82rem;
-}
 .area-choice-field {
   display: grid;
   gap: 7px;
@@ -652,12 +619,40 @@
   }
 
   .dialog-backdrop {
-    align-items: end;
-    padding: 8px;
+    z-index: 90;
+    align-items: stretch;
+    padding: 0;
   }
 
   .area-dialog {
-    max-height: calc(100dvh - 16px);
-    border-radius: 20px;
+    width: 100%;
+    max-height: none;
+    height: 100%;
+    border: 0;
+    border-radius: 0;
+  }
+}
+
+@media (min-width: 681px) {
+  .dialog-backdrop {
+    position: relative;
+    z-index: auto;
+    inset: auto;
+    height: 100%;
+    display: block;
+    padding: 0;
+    background: transparent;
+    backdrop-filter: none;
+  }
+
+  .area-dialog {
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    overflow: auto;
+    border: 0;
+    border-left: 1px solid var(--color-border);
+    border-radius: 0;
+    box-shadow: none;
   }
 }

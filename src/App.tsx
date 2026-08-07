@@ -33,7 +33,7 @@ function App() {
 }
 
 function AppShell() {
-  const desktopMedia = window.matchMedia("(min-width: 1181px)");
+  const desktopMedia = window.matchMedia("(min-width: 681px)");
   const [desktopShell, setDesktopShell] = createSignal(desktopMedia.matches);
   const desktopInboxOpen =
     desktopMedia.matches &&
@@ -64,7 +64,7 @@ function AppShell() {
     );
   };
   const openSearch = () => {
-    if (window.matchMedia("(max-width: 1180px)").matches) closeInbox(false);
+    if (window.matchMedia("(max-width: 680px)").matches) closeInbox(false);
     setSearchOpen(true);
     queueMicrotask(() =>
       document.querySelector<HTMLInputElement>("#global-search-input")?.focus(),
@@ -75,7 +75,7 @@ function AppShell() {
     if (
       open &&
       inspectorOpen() &&
-      window.matchMedia("(max-width: 1180px)").matches
+      window.matchMedia("(max-width: 680px)").matches
     ) {
       itemPanel.close();
     }
@@ -93,12 +93,6 @@ function AppShell() {
       queueMicrotask(() =>
         document.querySelector<HTMLInputElement>("#quick-capture")?.focus(),
       );
-    }
-  });
-
-  createEffect(inspectorOpen, (open) => {
-    if (open && window.matchMedia("(max-width: 1180px)").matches) {
-      closeInbox(false);
     }
   });
 
@@ -158,15 +152,6 @@ function AppShell() {
                 </Link>
               )}
             </For>
-            <button
-              type="button"
-              class={["nav-button global-search-nav", { active: searchOpen() }]}
-              aria-label="Search Items"
-              title="Search Items (Ctrl/⌘ K)"
-              onClick={openSearch}
-            >
-              <Icon name="search" size={21} />
-            </button>
           </nav>
           <WorkspaceMenu />
         </aside>
@@ -181,6 +166,7 @@ function AppShell() {
           <Outlet />
         </main>
         <ItemInspector docked={desktopShell()} />
+        <div id="area-inspector-host" class="area-inspector-host" />
         <Show when={searchOpen()}>
           <div class="search-host open" onClick={closeSearch}>
             <SearchPanel onClose={closeSearch} />

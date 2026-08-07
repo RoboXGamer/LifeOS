@@ -8,6 +8,7 @@ import {
   createSignal,
   untrack,
 } from "solid-js";
+import { Portal } from "@solidjs/web";
 import { Link } from "@tanstack/solid-router";
 import { nanoid } from "nanoid";
 import type { Doc, Id } from "../../convex/_generated/dataModel";
@@ -134,6 +135,11 @@ export default function Areas() {
     queueMicrotask(() => setEditor(null));
   };
 
+  const openEditor = (value: Doc<"areas"> | "new") => {
+    panel.close();
+    setEditor(value);
+  };
+
   const moveInboxItem = (itemId: string, areaId: Id<"areas">) => {
     const item = items.itemById(itemId);
     if (!item || item.areaId !== null) return;
@@ -185,7 +191,7 @@ export default function Areas() {
           <button
             type="button"
             class="primary-action"
-            onClick={() => setEditor("new")}
+            onClick={() => openEditor("new")}
           >
             <Icon name="plus" size={18} />
             New Area
@@ -219,7 +225,7 @@ export default function Areas() {
                 <p>
                   Start with one part of life you want to protect from drift.
                 </p>
-                <button type="button" onClick={() => setEditor("new")}>
+                <button type="button" onClick={() => openEditor("new")}>
                   Create an Area
                 </button>
               </div>
@@ -274,7 +280,7 @@ export default function Areas() {
                         <button
                           type="button"
                           aria-label={`Edit ${area().name}`}
-                          onClick={() => setEditor({ ...area() })}
+                          onClick={() => openEditor({ ...area() })}
                         >
                           <Icon name="edit" size={16} />
                         </button>
@@ -313,6 +319,7 @@ export function AreaEditor(props: {
   onClose: () => void;
   onSave: (input: AreaInput) => void;
 }) {
+  const mount = document.getElementById("area-inspector-host");
   const initialArea = untrack(() => props.area);
   const [icon, setIcon] = createSignal<IconName>(
     (initialArea?.icon as IconName) ?? "folder",
@@ -329,116 +336,108 @@ export function AreaEditor(props: {
     });
   };
 
+  if (!mount) return null;
+
   return (
-    <div
-      class="dialog-backdrop"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) props.onClose();
-      }}
-    >
-      <section class="area-dialog" role="dialog" aria-modal="true">
-        <header>
-          <div>
-            <span>
-              <Icon name={props.area ? "edit" : "plus"} size={18} />
-            </span>
+    <Portal mount={mount}>
+      <div
+        class="dialog-backdrop"
+        onMouseDown={(event) => {
+          if (event.target === event.currentTarget) props.onClose();
+        }}
+      >
+        <section class="area-dialog" role="dialog" aria-modal="true">
+          <header>
             <div>
-              <h3>{props.area ? "Edit Area" : "Create an Area"}</h3>
-              <p>Give this part of life a clear identity.</p>
+              <span>
+                <Icon name={props.area ? "edit" : "plus"} size={18} />
+              </span>
+              <div>
+                <h3>{props.area ? "Edit Area" : "Create an Area"}</h3>
+                <p>Give this part of life a clear identity.</p>
+              </div>
             </div>
-          </div>
-          <button type="button" aria-label="Close" onClick={props.onClose}>
-            <Icon name="close" size={18} />
-          </button>
-        </header>
-        <form onSubmit={submit}>
-          <div
-            class="area-editor-preview"
-            style={{ "--_preview-color": color() }}
-          >
-            <span>
-              <Icon name={icon()} size={28} />
-            </span>
-            <div>
-              <small>Preview</small>
-              <strong>{props.area?.name || "Your new Area"}</strong>
-            </div>
-          </div>
-          <label>
-            <span>Name</span>
-            <input
-              name="name"
-              value={props.area?.name ?? ""}
-              maxlength="80"
-              autofocus
-              required
-            />
-          </label>
-          <label>
-            <span>Description</span>
-            <textarea
-              name="description"
-              rows="3"
-              maxlength="5000"
-              placeholder="What belongs here?"
-            >
-              {props.area?.description ?? ""}
-            </textarea>
-          </label>
-          <fieldset class="area-choice-field">
-            <legend>Icon</legend>
-            <input type="hidden" name="icon" value={icon()} />
-            <div class="area-icon-grid">
-              <For each={areaIcons}>
-                {(choice) => (
-                  <button
-                    type="button"
-                    class={{ active: icon() === choice }}
-                    aria-label={`Use ${choice} icon`}
-                    onClick={() => setIcon(choice)}
-                  >
-                    <Icon name={choice} size={18} />
-                  </button>
-                )}
-              </For>
-            </div>
-          </fieldset>
-          <fieldset class="area-choice-field">
-            <legend>Color</legend>
-            <input type="hidden" name="color" value={color()} />
-            <div class="area-color-grid">
-              <For each={areaColors}>
-                {(choice) => (
-                  <button
-                    type="button"
-                    class={{ active: color() === choice }}
-                    aria-label={`Use color ${choice}`}
-                    style={{ "--_choice": choice }}
-                    onClick={() => setColor(choice)}
+            <button type="button" aria-label="Close" onClick={props.onClose}>
+              <Icon name="close" size={18} />
+            </button>
+          </header>
+          <form onSubmit={submit}>
+            <label>
+              <span>Name</span>
+              <input
+                name="name"
+                value={props.area?.name ?? ""}
+                maxlength="80"
+                autofocus
+                required
+              />
+            </label>
+            <label>
+              <span>Description</span>
+              <textarea
+                name="description"
+                rows="3"
+                maxlength="5000"
+                placeholder="What belongs here?"
+              >
+                {props.area?.description ?? ""}
+              </textarea>
+            </label>
+            <fieldset class="area-choice-field">
+              <legend>Icon</legend>
+              <input type="hidden" name="icon" value={icon()} />
+              <div class="area-icon-grid">
+                <For each={areaIcons}>
+                  {(choice) => (
+                    <button
+                      type="button"
+                      class={{ active: icon() === choice }}
+                      aria-label={`Use ${choice} icon`}
+                      onClick={() => setIcon(choice)}
+                    >
+                      <Icon name={choice} size={18} />
+                    </button>
+                  )}
+                </For>
+              </div>
+            </fieldset>
+            <fieldset class="area-choice-field">
+              <legend>Color</legend>
+              <input type="hidden" name="color" value={color()} />
+              <div class="area-color-grid">
+                <For each={areaColors}>
+                  {(choice) => (
+                    <button
+                      type="button"
+                      class={{ active: color() === choice }}
+                      aria-label={`Use color ${choice}`}
+                      style={{ "--_choice": choice }}
+                      onClick={() => setColor(choice)}
+                    />
+                  )}
+                </For>
+                <label class="custom-area-color">
+                  <span>Custom</span>
+                  <input
+                    type="color"
+                    value={color()}
+                    onInput={(event) => setColor(event.currentTarget.value)}
                   />
-                )}
-              </For>
-              <label class="custom-area-color">
-                <span>Custom</span>
-                <input
-                  type="color"
-                  value={color()}
-                  onInput={(event) => setColor(event.currentTarget.value)}
-                />
-              </label>
-            </div>
-          </fieldset>
-          <footer>
-            <button type="button" onClick={props.onClose}>
-              Cancel
-            </button>
-            <button type="submit" class="primary-action">
-              {props.area ? "Save changes" : "Create Area"}
-            </button>
-          </footer>
-        </form>
-      </section>
-    </div>
+                </label>
+              </div>
+            </fieldset>
+            <footer>
+              <button type="button" onClick={props.onClose}>
+                Cancel
+              </button>
+              <button type="submit" class="primary-action">
+                {props.area ? "Save changes" : "Create Area"}
+              </button>
+            </footer>
+          </form>
+        </section>
+      </div>
+    </Portal>
   );
 }
 
