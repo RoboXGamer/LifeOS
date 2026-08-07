@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { requireProfile, requireWorkspaceOwner } from "./lib/auth";
 import { cleanName } from "./lib/validation";
+import { workspaceDoc } from "./lib/validators";
 
 const defaultTags = [
   "urgent",
@@ -15,6 +16,17 @@ const defaultTags = [
 
 export const list = query({
   args: {},
+  returns: v.object({
+    activeWorkspaceId: v.union(v.id("workspaces"), v.null()),
+    workspaces: v.array(
+      v.object({
+        id: v.id("workspaces"),
+        name: v.string(),
+        createdAt: v.number(),
+        updatedAt: v.number(),
+      }),
+    ),
+  }),
   handler: async (ctx) => {
     const profile = await requireProfile(ctx);
     const workspaces = await ctx.db
@@ -37,6 +49,7 @@ export const list = query({
 
 export const listArchived = query({
   args: {},
+  returns: v.array(workspaceDoc),
   handler: async (ctx) => {
     const profile = await requireProfile(ctx);
     return await ctx.db
@@ -50,8 +63,16 @@ export const listArchived = query({
 
 export const create = mutation({
   args: { name: v.string() },
+  returns: v.id("workspaces"),
   handler: async (ctx, args) => {
     const profile = await requireProfile(ctx);
+    const existing = await ctx.db
+      .query("workspaces")
+      .withIndex("by_ownerId", (q) => q.eq("ownerId", profile._id))
+      .take(101);
+    if (existing.length >= 100) {
+      throw new Error("A profile can have at most 100 Workspaces.");
+    }
     const now = Date.now();
     const workspaceId = await ctx.db.insert("workspaces", {
       ownerId: profile._id,
@@ -77,9 +98,19 @@ export const create = mutation({
 });
 
 export const rename = mutation({
-  args: { workspaceId: v.id("workspaces"), name: v.string() },
+  args: {
+    workspaceId: v.id("workspaces"),
+    name: v.string(),
+    expectedUpdatedAt: v.number(),
+  },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const { workspace } = await requireWorkspaceOwner(ctx, args.workspaceId);
+    if (workspace.updatedAt !== args.expectedUpdatedAt) {
+      throw new Error(
+        "This Workspace changed elsewhere. Reopen the menu and try again.",
+      );
+    }
     await ctx.db.patch("workspaces", workspace._id, {
       name: cleanName(args.name, "Workspace name"),
       updatedAt: Date.now(),
@@ -90,6 +121,7 @@ export const rename = mutation({
 
 export const select = mutation({
   args: { workspaceId: v.id("workspaces") },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const { profile, workspace } = await requireWorkspaceOwner(
       ctx,
@@ -106,6 +138,7 @@ export const select = mutation({
 
 export const setArchived = mutation({
   args: { workspaceId: v.id("workspaces"), archived: v.boolean() },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const { profile, workspace } = await requireWorkspaceOwner(
       ctx,
@@ -145,6 +178,11 @@ export const setArchived = mutation({
 
 export const removalImpact = query({
   args: { workspaceId: v.id("workspaces") },
+  returns: v.object({
+    areaCount: v.number(),
+    itemCount: v.number(),
+    tooLarge: v.boolean(),
+  }),
   handler: async (ctx, args) => {
     await requireProfile(ctx);
     const workspace = await ctx.db.get("workspaces", args.workspaceId);
@@ -176,6 +214,7 @@ export const removalImpact = query({
 
 export const remove = mutation({
   args: { workspaceId: v.id("workspaces"), confirmation: v.string() },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const { profile, workspace } = await requireWorkspaceOwner(
       ctx,

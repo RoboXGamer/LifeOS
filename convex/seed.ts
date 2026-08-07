@@ -1,8 +1,12 @@
+import { v } from "convex/values";
 import { mutation } from "./_generated/server";
 import { requireAdmin, requireWorkspaceOwner } from "./lib/auth";
 
 export const seedAreas = mutation({
   args: {},
+  returns: v.object({
+    status: v.union(v.literal("already_seeded"), v.literal("seeded")),
+  }),
   handler: async (ctx) => {
     const profile = await requireAdmin(ctx);
     if (!profile.activeWorkspaceId)

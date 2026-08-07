@@ -1,3 +1,33 @@
+const reservedUsernames = new Set([
+  "admin",
+  "administrator",
+  "api",
+  "help",
+  "lifeos",
+  "root",
+  "security",
+  "support",
+  "system",
+]);
+
+export function isValidUsername(value: string): boolean {
+  const username = value.trim().toLowerCase();
+  return (
+    /^[a-z0-9][a-z0-9_]{2,29}$/.test(username) &&
+    !reservedUsernames.has(username)
+  );
+}
+
+export function cleanUsername(value: string): string {
+  const username = value.trim().toLowerCase();
+  if (!isValidUsername(username)) {
+    throw new Error(
+      "Username must be 3–30 lowercase letters, numbers, or _ and cannot be reserved.",
+    );
+  }
+  return username;
+}
+
 export function cleanName(value: string, label: string, maximum = 80): string {
   const name = value.trim().replace(/\s+/g, " ");
   if (name.length < 1 || name.length > maximum) {

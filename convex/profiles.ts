@@ -1,7 +1,8 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
 import { requireProfile } from "./lib/auth";
+import { cleanUsername } from "./lib/validation";
 
 const defaultTags = [
   "urgent",
@@ -13,8 +14,81 @@ const defaultTags = [
   "order",
 ];
 
+export const linkAnonymousAccount = internalMutation({
+  args: {
+    anonymousAuthUserId: v.string(),
+    permanentAuthUserId: v.string(),
+    username: v.union(v.string(), v.null()),
+    email: v.union(v.string(), v.null()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const anonymousProfile = await ctx.db
+      .query("profiles")
+      .withIndex("by_authUserId", (q) =>
+        q.eq("authUserId", args.anonymousAuthUserId),
+      )
+      .unique();
+    if (!anonymousProfile) return null;
+
+    const permanentProfile = await ctx.db
+      .query("profiles")
+      .withIndex("by_authUserId", (q) =>
+        q.eq("authUserId", args.permanentAuthUserId),
+      )
+      .unique();
+    const now = Date.now();
+    const username = args.username ? cleanUsername(args.username) : undefined;
+    const email = args.email?.trim().toLowerCase() || undefined;
+
+    if (!permanentProfile) {
+      await ctx.db.patch("profiles", anonymousProfile._id, {
+        authUserId: args.permanentAuthUserId,
+        username,
+        normalizedUsername: username,
+        email,
+        isAnonymous: false,
+        updatedAt: now,
+      });
+      return null;
+    }
+
+    const anonymousWorkspaces = await ctx.db
+      .query("workspaces")
+      .withIndex("by_ownerId", (q) => q.eq("ownerId", anonymousProfile._id))
+      .take(100);
+    const permanentWorkspaceCount = await ctx.db
+      .query("workspaces")
+      .withIndex("by_ownerId", (q) => q.eq("ownerId", permanentProfile._id))
+      .take(101);
+    if (permanentWorkspaceCount.length + anonymousWorkspaces.length > 100) {
+      throw new Error(
+        "These accounts have too many Workspaces to combine safely.",
+      );
+    }
+    for (const workspace of anonymousWorkspaces) {
+      await ctx.db.patch("workspaces", workspace._id, {
+        ownerId: permanentProfile._id,
+        updatedAt: now,
+      });
+    }
+    await ctx.db.delete("profiles", anonymousProfile._id);
+    return null;
+  },
+});
+
 export const bootstrap = mutation({
   args: {},
+  returns: v.object({
+    profile: v.object({
+      id: v.id("profiles"),
+      username: v.union(v.string(), v.null()),
+      email: v.union(v.string(), v.null()),
+      isAnonymous: v.boolean(),
+      role: v.union(v.literal("user"), v.literal("admin")),
+    }),
+    activeWorkspaceId: v.union(v.id("workspaces"), v.null()),
+  }),
   handler: async (ctx) => {
     const authUser = await authComponent.getAuthUser(ctx);
     if (!authUser) throw new Error("Authentication required.");
@@ -117,6 +191,15 @@ export const bootstrap = mutation({
 
 export const current = query({
   args: {},
+  returns: v.object({
+    id: v.id("profiles"),
+    username: v.union(v.string(), v.null()),
+    email: v.union(v.string(), v.null()),
+    isAnonymous: v.boolean(),
+    role: v.union(v.literal("user"), v.literal("admin")),
+    activeWorkspaceId: v.union(v.id("workspaces"), v.null()),
+    usernameChangedAt: v.union(v.number(), v.null()),
+  }),
   handler: async (ctx) => {
     const profile = await requireProfile(ctx);
     return {
@@ -133,14 +216,10 @@ export const current = query({
 
 export const changeUsername = mutation({
   args: { username: v.string() },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const profile = await requireProfile(ctx);
-    const username = args.username.trim().toLowerCase();
-    if (!/^[a-z0-9][a-z0-9_]{2,29}$/.test(username)) {
-      throw new Error(
-        "Username must be 3–30 lowercase letters, numbers, or _.",
-      );
-    }
+    const username = cleanUsername(args.username);
     const now = Date.now();
     const cooldown = 7 * 24 * 60 * 60 * 1000;
     if (

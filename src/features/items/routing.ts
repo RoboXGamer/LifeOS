@@ -37,7 +37,7 @@ export function useItemPanelRoute() {
       "/app/upcoming",
       "/app/tags",
       "/app/archive",
-      "/app/settings",
+      "/app/login",
       "/app/search",
     ] as const;
     const target = routes.find((route) => route === pathname) ?? "/app/areas";

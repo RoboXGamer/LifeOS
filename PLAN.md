@@ -31,10 +31,19 @@ under the relevant task instead of silently changing scope.
 - [x] Route-aware inspector and global Inbox verified at desktop and phone
       widths without changing the draft3 navigation shell.
 - [x] Milestone C / Phases 6–8 implemented locally: daily retrieval, Area
-      calendar, Tags, global Search, Archive, and Settings now form the next
+      calendar, Tags, global Search, Archive, and account access now form the next
       complete product slice.
-- [ ] Manual browser verification for Milestone C intentionally deferred at the
-      user's request; this checkpoint uses the production build as its gate.
+- [x] Manual browser verification for Milestone C completed by the user after
+      the implementation pass.
+- [x] Permanent account creation, username/email sign-in, anonymous-profile
+      conversion, and separate-Workspace preservation implemented on the
+      development deployment; manual flow verification is deferred to the user.
+
+Current V1 product decisions supersede older checklist wording below: Today
+shows every dated Item type; Search remains a full route but its unfinished
+sidebar trigger is not shipped; Area Detail intentionally omits metrics; and the
+financial model is Expense (`Planned`/`Spent`) plus Income
+(`Expected`/`Received`).
 
 Implementation note: Better Auth's vanilla external session store is adapted to
 an explicit Solid-owned readiness signal and loading/error boundary. `<Loading>`
@@ -147,7 +156,7 @@ Acceptance:
 - [x] Define `/app` redirect/default behavior.
 - [x] Define `/app/areas` and `/app/areas/$areaId`.
 - [x] Reserve `/app/areas/$areaId/calendar`, `/app/today`, `/app/upcoming`,
-      `/app/tags`, `/app/archive`, and `/app/settings`.
+      `/app/tags`, `/app/archive`, and `/app/login`.
 - [x] Define route search validation for `item`, `mode`, `parent`, and other
       inspector state.
 - [x] Add a not-found route and safe invalid-Workspace/Area behavior.
@@ -287,16 +296,22 @@ Better Auth user
 
 ### 2.3 Centralize domain validation
 
-- [ ] Define username normalization, reserved names, allowed characters,
+- [x] Define username normalization, reserved names, allowed characters,
       minimum/maximum lengths, and cooldown enforcement.
 - [x] Define Workspace and Area name/description limits.
-- [ ] Define exact Item type, status, priority, amount, financial-state, due-date,
+- [x] Define exact Item type, status, priority, amount, financial-state, due-date,
       and description rules.
-- [ ] Require an Item type when `areaId` is non-null.
-- [ ] Validate single-level parent rules and shared location.
-- [ ] Validate Tag normalization and Workspace uniqueness.
+- [x] Require an Item type when `areaId` is non-null.
+- [x] Validate single-level parent rules and shared location.
+- [x] Validate Tag normalization and Workspace uniqueness.
 - [x] Reject cross-Workspace IDs even when the documents exist.
-- [ ] Use Convex argument and return validators for public functions.
+- [x] Use Convex argument and return validators for public functions.
+
+Validation note: all 41 public/internal Convex endpoints declare output
+validators. Shared validators define persisted domain shapes; financial state is
+type-specific; usernames reject reserved names; and V1 Workspace, Area, Item,
+Tag, title, date, amount, description, parent, and ownership limits are enforced
+server-side.
 
 ### 2.4 Build authorization helpers
 
@@ -354,13 +369,20 @@ Acceptance:
 - [x] Surface mutation errors inline and allow retry where meaningful.
 - [x] Do not apply Convex `withOptimisticUpdate` to an entity already covered by
       a Solid optimistic store.
-- [ ] Confirm concurrent create/update/archive actions resolve without stale
+- [x] Confirm concurrent create/update/archive actions resolve without stale
       overlays or flicker.
+
+Race note: Convex transactions protect ownership, uniqueness, capacity,
+archive/restore, and destructive preconditions. Full-form Item and Area edits
+and Workspace renames also send `expectedUpdatedAt`, rejecting stale writes
+instead of silently overwriting newer data. Desired-state completion and
+archive mutations are safe to repeat, and independently archived child Items
+remain independent when restored.
 
 ### 3.3 Workspace API and UI
 
 - [x] Query all active owner Workspaces with a bounded result.
-- [x] Query archived Workspaces for Archive/Settings.
+- [x] Query archived Workspaces for Archive and Workspace management.
 - [x] Create Workspace with normalized validation and default Tags.
 - [x] Rename Workspace.
 - [x] Switch active Workspace and update all scoped subscriptions.
@@ -500,7 +522,8 @@ Milestone A is complete when all Phase 1–3 acceptance criteria pass.
 
 - [x] Define client-local `YYYY-MM-DD` behavior explicitly.
 - [x] Pass current date into Convex queries; do not read wall clock in queries.
-- [x] Query incomplete Tasks due today with correct Workspace/Area/archive rules.
+- [x] Query every Item type dated today with correct Workspace/Area/archive
+      rules; calculate completion progress from Tasks only.
 - [x] Complete/reopen optimistically.
 - [x] Keep completed content discoverable without clutter.
 
@@ -538,7 +561,8 @@ Milestone A is complete when all Phase 1–3 acceptance criteria pass.
 - [x] Decide the bounded search contract for description/type/tag/Area
       enrichment.
 - [x] Debounce input without making results feel delayed.
-- [x] Provide a global search trigger without changing sidebar navigation.
+- [x] Keep the full Search route available without shipping the unfinished
+      sidebar trigger/search-overlay UI in V1.
 - [x] Support keyboard access and mobile presentation.
 - [x] Open results in the shared inspector.
 
@@ -546,7 +570,7 @@ Search contract: search active Item titles in the selected Workspace, return at
 most 40 matches, then enrich those bounded matches with type and Tag context.
 Area visibility is enforced after search so archived Areas cannot surface.
 
-## Phase 8 — Archive and Settings
+## Phase 8 — Archive and account access
 
 ### 8.1 Archive
 
@@ -557,19 +581,22 @@ Area visibility is enforced after search so archived Areas cannot surface.
 - [x] Show affected counts before destructive deletion.
 - [x] Ensure active data cannot be permanently deleted through these endpoints.
 
-### 8.2 Settings
+### 8.2 Account and Workspace access
 
-- [x] Account summary and anonymous/permanent status.
-- [x] Username change form with validation and server cooldown.
-- [x] Email/session/sign-out controls supplied safely by Better Auth.
-- [x] Workspace management entry points.
-- [x] No custom workflows, theme system, or unrelated configuration.
+- [x] Show anonymous/permanent account identity in the profile popup.
+- [x] Show username instead of duplicating the current Workspace in the popup
+      header; rely on the Workspace list's Active marker.
+- [x] Provide anonymous-only Login navigation to the combined `/app/login`
+      account creation/sign-in page.
+- [x] Keep Workspace create, rename, switch, and archive controls in the profile
+      popup instead of shipping a redundant Settings page.
+- [x] Do not ship a standalone Settings route in V1.
 
 ### Milestone C verification
 
 - [x] Confirm every view respects active Workspace and archive boundaries by
       endpoint ownership and filter inspection.
-- [ ] Confirm date behavior around local-day boundaries in the browser.
+- [x] Confirm date behavior around local-day boundaries in the browser.
 - [x] Confirm search/tag results cannot leak another Workspace by endpoint
       ownership and filter inspection.
 - [x] Confirm destructive confirmation behavior by endpoint and UI inspection.
@@ -590,13 +617,13 @@ the compact sidebar, global Inbox drawer, and route-aware Item inspector.
       empty states, and responsive desktop/mobile presentation.
 - [x] Upgrade Areas with richer identity, visual editing, useful counts, and
       safe desktop Inbox-to-Area organization.
-- [x] Rebuild Area Detail around a summary, metrics, search/type filters, dense
+- [x] Rebuild Area Detail around a summary, search/type filters, dense
       metadata, expandable children, and inline Task actions.
 - [x] Make Week the default Area calendar view, with Agenda and Month modes,
       bounded range queries, quick date creation, overdue context, and shared
       inspector actions.
 - [x] Restore Today progress, strengthen Upcoming grouping, broaden Search, and
-      polish Tags, Archive, Settings, Inbox, and the Item inspector.
+      polish Tags, Archive, account access, Inbox, and the Item inspector.
 - [x] Use a full Search results route reached from the global panel without
       adding a sidebar button.
 - [x] Conditionally mount modal surfaces, trap/restore focus, honor Escape and
@@ -622,19 +649,19 @@ Acceptance:
 
 ## Phase 9 — Anonymous conversion and permanent authentication
 
-- [ ] Build username/email/password signup from the anonymous session.
-- [ ] Build sign-in accepting username or email.
-- [ ] Upgrade the current anonymous identity without changing Life OS profile ID.
+- [x] Build username/email/password signup from the anonymous session.
+- [x] Build sign-in accepting username or email.
+- [x] Upgrade the current anonymous identity without changing Life OS profile ID.
 - [ ] Verify all Workspaces and data remain attached after conversion.
 - [ ] Build explicit import/discard flow when signing into an existing account
       from an anonymous session.
-- [ ] Make import create/preserve a separate Workspace rather than silently
+- [x] Make import create/preserve a separate Workspace rather than silently
       co-mingling Items.
-- [ ] Never discard anonymous data without a confirmed choice.
-- [ ] Add sign-out and returning-session behavior.
+- [x] Never discard anonymous data without a confirmed choice.
+- [x] Add sign-out and returning-session behavior.
 - [ ] Handle expired sessions, duplicate usernames/emails, wrong passwords,
       network errors, and suspended profiles.
-- [ ] Add permanent-account prompts after meaningful use while keeping them
+- [x] Add permanent-account prompts after meaningful use while keeping them
       dismissible and non-blocking.
 
 ## Phase 10 — Landing page and onboarding
@@ -663,7 +690,7 @@ Acceptance:
 - [ ] Add consistent Loading/Errored/empty/reconnecting affordances.
 - [ ] Verify realtime updates across two browser sessions.
 - [ ] Verify optimistic failure and reconnect recovery.
-- [ ] Prevent double submits and destructive action races.
+- [x] Prevent double submits and destructive action races.
 - [ ] Check common Chromium, Firefox, and mobile browser behavior manually.
 - [ ] Keep PWA installation/offline mutation outside this MVP milestone.
 
@@ -699,7 +726,7 @@ attention.
 - [ ] Area create, edit, archive, restore, permanent delete.
 - [ ] Quick capture → Inbox → type/Area assignment.
 - [ ] Item edit, child creation, move, complete, archive, restore, delete.
-- [ ] Today, Upcoming, Area detail/calendar, Tags, Search, Archive, Settings.
+- [ ] Today, Upcoming, Area detail/calendar, Tags, Search, Archive, and Login.
 - [ ] Anonymous conversion preserves all data.
 - [ ] Returning sign-in works with username and email.
 - [ ] Existing-account import/discard flow is explicit and safe.

@@ -1,11 +1,15 @@
 import { For, Show, createSignal } from "solid-js";
+import { Link } from "@tanstack/solid-router";
+import { api } from "../../../convex/_generated/api";
 import { Icon } from "../../Icon";
 import Avatar from "../../Avatar";
+import { createQuery } from "../../convex";
 import { useWorkspaces } from "./context";
 import "./WorkspaceMenu.css";
 
 export function WorkspaceMenu() {
   const model = useWorkspaces();
+  const profile = createQuery(api.profiles.current, {}, {});
   const [open, setOpen] = createSignal(false);
   const [creating, setCreating] = createSignal(false);
   const [renaming, setRenaming] = createSignal(false);
@@ -36,13 +40,21 @@ export function WorkspaceMenu() {
       <button
         type="button"
         class="workspace-trigger"
-        aria-label="Switch Workspace"
+        aria-label={
+          profile()?.isAnonymous
+            ? "Account and Workspaces"
+            : `@${profile()?.username ?? "Account"}`
+        }
         aria-expanded={open() ? "true" : "false"}
         onClick={() => setOpen((value) => !value)}
       >
         <Avatar
           size={40}
-          fallback={(model.activeWorkspace()?.name ?? "Life")
+          fallback={(
+            profile()?.username ??
+            model.activeWorkspace()?.name ??
+            "Life"
+          )
             .slice(0, 2)
             .toUpperCase()}
         />
@@ -56,8 +68,12 @@ export function WorkspaceMenu() {
         <section class="workspace-popover" aria-label="Workspaces">
           <header>
             <div>
-              <span>Current Workspace</span>
-              <strong>{model.activeWorkspace()?.name ?? "My Life"}</strong>
+              <span>Account</span>
+              <strong>
+                {profile()?.isAnonymous
+                  ? "Anonymous"
+                  : `@${profile()?.username ?? "Account"}`}
+              </strong>
             </div>
             <button
               type="button"
@@ -78,7 +94,6 @@ export function WorkspaceMenu() {
                   }}
                   onClick={() => model.selectWorkspace(workspace.id)}
                 >
-                  <span>{workspace.name.slice(0, 1).toUpperCase()}</span>
                   <strong>{workspace.name}</strong>
                   <Show when={workspace.id === model.state.activeWorkspaceId}>
                     <small>Active</small>
@@ -125,6 +140,12 @@ export function WorkspaceMenu() {
           </Show>
 
           <footer>
+            <Show when={profile()?.isAnonymous}>
+              <Link to="/app/login" onClick={() => setOpen(false)}>
+                <Icon name="user" size={16} />
+                Log in
+              </Link>
+            </Show>
             <button
               type="button"
               onClick={() => setCreating((value) => !value)}

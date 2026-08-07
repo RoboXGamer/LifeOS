@@ -6,6 +6,9 @@ export const join = mutation({
     name: v.string(),
     email: v.string(),
   },
+  returns: v.object({
+    status: v.union(v.literal("existing"), v.literal("created")),
+  }),
   handler: async (ctx, args) => {
     const name = args.name.trim();
     const email = args.email.trim().toLowerCase();

@@ -63,7 +63,13 @@ export default function AreaDetail() {
     void items.setTaskDone(itemId, done);
   const saveArea = async (input: AreaInput) => {
     try {
-      await updateAreaMutation({ areaId: areaId(), ...input });
+      const currentArea = area();
+      if (!currentArea) throw new Error("Area not found.");
+      await updateAreaMutation({
+        areaId: areaId(),
+        expectedUpdatedAt: currentArea.updatedAt,
+        ...input,
+      });
       setEditingArea(false);
       setError(null);
     } catch (reason) {

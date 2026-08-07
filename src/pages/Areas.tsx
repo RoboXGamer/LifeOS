@@ -107,12 +107,16 @@ export default function Areas() {
 
   const updateArea = action(function* (areaId: Id<"areas">, input: AreaInput) {
     setError(null);
+    const expectedUpdatedAt = areas.find(
+      (area) => area._id === areaId,
+    )?.updatedAt;
+    if (expectedUpdatedAt === undefined) return;
     setAreas((draft) => {
       const area = draft.find((item) => item._id === areaId);
       if (area) Object.assign(area, input, { updatedAt: Date.now() });
     });
     try {
-      yield updateAreaMutation({ areaId, ...input });
+      yield updateAreaMutation({ areaId, expectedUpdatedAt, ...input });
     } catch (reason) {
       recordFailure(reason);
     }

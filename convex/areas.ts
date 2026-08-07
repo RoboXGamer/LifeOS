@@ -7,6 +7,7 @@ import {
   cleanIcon,
   cleanName,
 } from "./lib/validation";
+import { areaDoc } from "./lib/validators";
 
 const areaFields = {
   name: v.string(),
@@ -17,6 +18,7 @@ const areaFields = {
 
 export const list = query({
   args: { workspaceId: v.id("workspaces") },
+  returns: v.array(areaDoc),
   handler: async (ctx, args) => {
     await requireWorkspaceOwner(ctx, args.workspaceId);
     return await ctx.db
@@ -30,6 +32,7 @@ export const list = query({
 
 export const listArchived = query({
   args: { workspaceId: v.id("workspaces") },
+  returns: v.array(areaDoc),
   handler: async (ctx, args) => {
     await requireWorkspaceOwner(ctx, args.workspaceId);
     return await ctx.db
@@ -43,6 +46,7 @@ export const listArchived = query({
 
 export const get = query({
   args: { areaId: v.id("areas") },
+  returns: v.union(areaDoc, v.null()),
   handler: async (ctx, args) => {
     const area = await ctx.db.get("areas", args.areaId);
     if (!area) return null;
@@ -53,8 +57,16 @@ export const get = query({
 
 export const create = mutation({
   args: { workspaceId: v.id("workspaces"), ...areaFields },
+  returns: v.id("areas"),
   handler: async (ctx, args) => {
     await requireWorkspaceOwner(ctx, args.workspaceId);
+    const existing = await ctx.db
+      .query("areas")
+      .withIndex("by_workspaceId", (q) => q.eq("workspaceId", args.workspaceId))
+      .take(101);
+    if (existing.length >= 100) {
+      throw new Error("A Workspace can have at most 100 Areas.");
+    }
     const now = Date.now();
     return await ctx.db.insert("areas", {
       workspaceId: args.workspaceId,
@@ -70,11 +82,19 @@ export const create = mutation({
 });
 
 export const update = mutation({
-  args: { areaId: v.id("areas"), ...areaFields },
+  args: {
+    areaId: v.id("areas"),
+    expectedUpdatedAt: v.number(),
+    ...areaFields,
+  },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const area = await ctx.db.get("areas", args.areaId);
     if (!area) throw new Error("Area not found.");
     await requireWorkspaceOwner(ctx, area.workspaceId);
+    if (area.updatedAt !== args.expectedUpdatedAt) {
+      throw new Error("This Area changed elsewhere. Reopen it and try again.");
+    }
     await ctx.db.patch("areas", area._id, {
       name: cleanName(args.name, "Area name"),
       description: cleanDescription(args.description),
@@ -88,6 +108,7 @@ export const update = mutation({
 
 export const setArchived = mutation({
   args: { areaId: v.id("areas"), archived: v.boolean() },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const area = await ctx.db.get("areas", args.areaId);
     if (!area) throw new Error("Area not found.");
@@ -102,6 +123,7 @@ export const setArchived = mutation({
 
 export const removalImpact = query({
   args: { areaId: v.id("areas") },
+  returns: v.object({ itemCount: v.number(), tooLarge: v.boolean() }),
   handler: async (ctx, args) => {
     await requireProfile(ctx);
     const area = await ctx.db.get("areas", args.areaId);
@@ -119,6 +141,7 @@ export const removalImpact = query({
 
 export const remove = mutation({
   args: { areaId: v.id("areas"), confirmation: v.string() },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const area = await ctx.db.get("areas", args.areaId);
     if (!area) throw new Error("Area not found.");

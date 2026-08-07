@@ -1,26 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
-
-const itemType = v.union(
-  v.literal("Task"),
-  v.literal("Note"),
-  v.literal("Event"),
-  v.literal("Expense"),
-  v.literal("Income"),
-);
-
-const financialState = v.union(
-  v.literal("Planned"),
-  v.literal("Spent"),
-  v.literal("Expected"),
-  v.literal("Received"),
-);
-
-const itemStatus = v.union(
-  v.literal("Todo"),
-  v.literal("In Progress"),
-  v.literal("Done"),
-);
+import { financialState, itemStatus, itemType } from "./lib/validators";
 
 export default defineSchema({
   waitlist: defineTable({

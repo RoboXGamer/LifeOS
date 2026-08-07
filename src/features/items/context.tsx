@@ -206,6 +206,10 @@ export function ItemProvider(props: ParentProps) {
 
   const updateItem = action(function* (itemId: Id<"items">, input: ItemInput) {
     setError(null);
+    const expectedUpdatedAt = activeItems.find(
+      (entry) => entry._id === itemId,
+    )?.updatedAt;
+    if (expectedUpdatedAt === undefined) return false;
     setActiveItems((draft) => {
       const item = draft.find((entry) => entry._id === itemId);
       if (!item) return;
@@ -245,7 +249,7 @@ export function ItemProvider(props: ParentProps) {
       }
     });
     try {
-      yield updateItemMutation({ itemId, ...input });
+      yield updateItemMutation({ itemId, expectedUpdatedAt, ...input });
       return true;
     } catch (reason) {
       recordFailure(reason);

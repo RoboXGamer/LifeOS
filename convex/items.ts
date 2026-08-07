@@ -15,27 +15,15 @@ import {
   cleanTagName,
   cleanTitle,
 } from "./lib/validation";
+import {
+  financialState,
+  itemStatus,
+  itemType,
+  itemView,
+} from "./lib/validators";
 
-const itemType = v.union(
-  v.literal("Task"),
-  v.literal("Note"),
-  v.literal("Event"),
-  v.literal("Expense"),
-  v.literal("Income"),
-);
-const financialState = v.union(
-  v.literal("Planned"),
-  v.literal("Spent"),
-  v.literal("Expected"),
-  v.literal("Received"),
-);
 const nullableFinancialState = v.union(financialState, v.null());
 const nullableItemType = v.union(itemType, v.null());
-const itemStatus = v.union(
-  v.literal("Todo"),
-  v.literal("In Progress"),
-  v.literal("Done"),
-);
 const nullableItemStatus = v.union(itemStatus, v.null());
 const nullablePriority = v.union(
   v.literal(1),
@@ -133,12 +121,23 @@ function normalizedFields(input: ItemInput) {
     };
   }
   if (type === "Expense" || type === "Income") {
+    const defaultState = type === "Expense" ? "Planned" : "Expected";
+    const financialState = input.financialState ?? defaultState;
+    if (
+      (type === "Expense" &&
+        financialState !== "Planned" &&
+        financialState !== "Spent") ||
+      (type === "Income" &&
+        financialState !== "Expected" &&
+        financialState !== "Received")
+    ) {
+      throw new Error(`Choose a valid ${type} status.`);
+    }
     return {
       ...shared,
       status: undefined,
       amount: cleanAmount(input.amount),
-      financialState:
-        input.financialState ?? (type === "Expense" ? "Planned" : "Expected"),
+      financialState,
     };
   }
   return {
@@ -170,6 +169,7 @@ async function setItemTags(
     .take(100);
   for (const link of existingLinks) await ctx.db.delete("itemTags", link._id);
 
+  let tagCount: number | undefined;
   for (const value of normalized) {
     let tag = await ctx.db
       .query("tags")
@@ -180,12 +180,26 @@ async function setItemTags(
       )
       .unique();
     if (!tag) {
+      if (tagCount === undefined) {
+        tagCount = (
+          await ctx.db
+            .query("tags")
+            .withIndex("by_workspaceId", (q) =>
+              q.eq("workspaceId", workspaceId),
+            )
+            .take(201)
+        ).length;
+      }
+      if (tagCount >= 200) {
+        throw new Error("A Workspace can have at most 200 Tags.");
+      }
       const tagId = await ctx.db.insert("tags", {
         workspaceId,
         name: value.name,
         normalizedName: value.normalizedName,
         createdAt: Date.now(),
       });
+      tagCount += 1;
       tag = (await ctx.db.get("tags", tagId))!;
     }
     await ctx.db.insert("itemTags", {
@@ -208,8 +222,22 @@ async function family(ctx: DatabaseCtx, item: Doc<"items">) {
   return { root, children };
 }
 
+async function requireItemCapacity(
+  ctx: MutationCtx,
+  workspaceId: Id<"workspaces">,
+) {
+  const existing = await ctx.db
+    .query("items")
+    .withIndex("by_workspaceId", (q) => q.eq("workspaceId", workspaceId))
+    .take(501);
+  if (existing.length >= 500) {
+    throw new Error("A Workspace can have at most 500 Items in V1.");
+  }
+}
+
 export const list = query({
   args: { workspaceId: v.id("workspaces") },
+  returns: v.array(itemView),
   handler: async (ctx, args) => {
     await requireWorkspaceOwner(ctx, args.workspaceId);
     const [items, areaIds] = await Promise.all([
@@ -230,6 +258,7 @@ export const list = query({
 
 export const listArchived = query({
   args: { workspaceId: v.id("workspaces") },
+  returns: v.array(itemView),
   handler: async (ctx, args) => {
     await requireWorkspaceOwner(ctx, args.workspaceId);
     const items = await ctx.db
@@ -244,6 +273,7 @@ export const listArchived = query({
 
 export const listByArea = query({
   args: { areaId: v.id("areas") },
+  returns: v.array(itemView),
   handler: async (ctx, args) => {
     const { area } = await requireAreaOwner(ctx, args.areaId);
     if (area.archived) return [];
@@ -259,6 +289,7 @@ export const listByArea = query({
 
 export const listToday = query({
   args: { workspaceId: v.id("workspaces"), date: v.string() },
+  returns: v.array(itemView),
   handler: async (ctx, args) => {
     await requireWorkspaceOwner(ctx, args.workspaceId);
     const date = cleanDueDate(args.date);
@@ -286,6 +317,7 @@ export const listUpcoming = query({
     afterDate: v.string(),
     limit: v.optional(v.number()),
   },
+  returns: v.array(itemView),
   handler: async (ctx, args) => {
     await requireWorkspaceOwner(ctx, args.workspaceId);
     const afterDate = cleanDueDate(args.afterDate);
@@ -316,6 +348,7 @@ export const listAreaRange = query({
     fromDate: v.string(),
     toDate: v.string(),
   },
+  returns: v.array(itemView),
   handler: async (ctx, args) => {
     const { area } = await requireAreaOwner(ctx, args.areaId);
     if (area.archived) return [];
@@ -347,6 +380,7 @@ export const search = query({
     searchTerm: v.string(),
     limit: v.optional(v.number()),
   },
+  returns: v.array(itemView),
   handler: async (ctx, args) => {
     await requireWorkspaceOwner(ctx, args.workspaceId);
     const searchTerm = args.searchTerm.trim();
@@ -374,6 +408,7 @@ export const search = query({
 
 export const get = query({
   args: { itemId: v.id("items") },
+  returns: itemView,
   handler: async (ctx, args) => {
     const { item } = await requireItemOwner(ctx, args.itemId);
     return await itemWithTags(ctx, item);
@@ -382,8 +417,10 @@ export const get = query({
 
 export const quickCapture = mutation({
   args: { workspaceId: v.id("workspaces"), title: v.string() },
+  returns: v.id("items"),
   handler: async (ctx, args) => {
     await requireWorkspaceOwner(ctx, args.workspaceId);
+    await requireItemCapacity(ctx, args.workspaceId);
     const now = Date.now();
     return await ctx.db.insert("items", {
       workspaceId: args.workspaceId,
@@ -399,8 +436,10 @@ export const quickCapture = mutation({
 
 export const create = mutation({
   args: { workspaceId: v.id("workspaces"), ...itemInput },
+  returns: v.id("items"),
   handler: async (ctx, args) => {
     await requireWorkspaceOwner(ctx, args.workspaceId);
+    await requireItemCapacity(ctx, args.workspaceId);
     let areaId = args.areaId;
     let parentId = args.parentId;
     if (parentId) {
@@ -432,9 +471,17 @@ export const create = mutation({
 });
 
 export const update = mutation({
-  args: { itemId: v.id("items"), ...itemInput },
+  args: {
+    itemId: v.id("items"),
+    expectedUpdatedAt: v.number(),
+    ...itemInput,
+  },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const { item } = await requireItemOwner(ctx, args.itemId);
+    if (item.updatedAt !== args.expectedUpdatedAt) {
+      throw new Error("This Item changed elsewhere. Reopen it and try again.");
+    }
     const currentFamily = await family(ctx, item);
     let areaId = args.areaId;
     let parentId = args.parentId;
@@ -483,6 +530,7 @@ export const update = mutation({
 
 export const setTaskDone = mutation({
   args: { itemId: v.id("items"), done: v.boolean() },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const { item } = await requireItemOwner(ctx, args.itemId);
     if (item.type !== "Task") throw new Error("Only Tasks can be completed.");
@@ -496,11 +544,11 @@ export const setTaskDone = mutation({
 
 export const setArchived = mutation({
   args: { itemId: v.id("items"), archived: v.boolean() },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const { item } = await requireItemOwner(ctx, args.itemId);
     const { root, children } = await family(ctx, item);
-    const members =
-      args.archived && item.parentId ? [item] : [root, ...children];
+    const members = item.parentId ? [item] : [root, ...children];
     const now = Date.now();
     for (const member of members) {
       await ctx.db.patch("items", member._id, {
@@ -514,6 +562,11 @@ export const setArchived = mutation({
 
 export const removalImpact = query({
   args: { itemId: v.id("items") },
+  returns: v.object({
+    rootId: v.id("items"),
+    rootTitle: v.string(),
+    itemCount: v.number(),
+  }),
   handler: async (ctx, args) => {
     await requireProfile(ctx);
     const item = await ctx.db.get("items", args.itemId);
@@ -538,6 +591,7 @@ export const removalImpact = query({
 
 export const remove = mutation({
   args: { itemId: v.id("items"), confirmation: v.string() },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const { item } = await requireItemOwner(ctx, args.itemId);
     const { root, children } = await family(ctx, item);

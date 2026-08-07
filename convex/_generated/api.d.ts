@@ -15,6 +15,7 @@ import type * as http from "../http.js";
 import type * as items from "../items.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_validation from "../lib/validation.js";
+import type * as lib_validators from "../lib/validators.js";
 import type * as profiles from "../profiles.js";
 import type * as seed from "../seed.js";
 import type * as tags from "../tags.js";
@@ -35,6 +36,7 @@ declare const fullApi: ApiFromModules<{
   items: typeof items;
   "lib/auth": typeof lib_auth;
   "lib/validation": typeof lib_validation;
+  "lib/validators": typeof lib_validators;
   profiles: typeof profiles;
   seed: typeof seed;
   tags: typeof tags;

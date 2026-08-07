@@ -11,7 +11,7 @@ import AreaDetail from "./pages/AreaDetail";
 import AreaCalendar from "./pages/AreaCalendar";
 import Areas from "./pages/Areas";
 import Archive from "./pages/Archive";
-import Settings from "./pages/Settings";
+import Login from "./pages/Login";
 import Search from "./pages/Search";
 import Tags from "./pages/Tags";
 import Today from "./pages/Today";
@@ -118,11 +118,11 @@ const archiveRoute = createRoute({
   component: Archive,
 });
 
-const settingsRoute = createRoute({
+const loginRoute = createRoute({
   getParentRoute: () => appRoute,
-  path: "/settings",
+  path: "/login",
   validateSearch: validateAppSearch,
-  component: Settings,
+  component: Login,
 });
 
 const searchRoute = createRoute({
@@ -143,7 +143,7 @@ const routeTree = rootRoute.addChildren([
     upcomingRoute,
     tagsRoute,
     archiveRoute,
-    settingsRoute,
+    loginRoute,
     searchRoute,
   ]),
 ]);

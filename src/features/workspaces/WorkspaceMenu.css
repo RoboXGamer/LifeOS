@@ -80,7 +80,7 @@
 
 .workspace-list > button {
   display: grid;
-  grid-template-columns: 32px 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 9px;
   width: 100%;
@@ -95,18 +95,6 @@
 .workspace-list > button:hover,
 .workspace-list > button.selected {
   background: color-mix(in srgb, var(--color-purple) 9%, transparent);
-}
-
-.workspace-list > button > span {
-  width: 32px;
-  height: 32px;
-  display: grid;
-  place-items: center;
-  border-radius: 10px;
-  color: var(--color-purple);
-  background: color-mix(in srgb, var(--color-purple) 12%, white);
-  font-size: 0.76rem;
-  font-weight: 800;
 }
 
 .workspace-list strong {
@@ -175,6 +163,22 @@
 
 .workspace-popover footer button:hover {
   background: hsl(228 40% 96%);
+}
+
+.workspace-popover footer a {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 9px;
+  padding: 7px 8px;
+  color: var(--color-purple);
+  font-size: 0.7rem;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.workspace-popover footer a:hover {
+  background: hsl(248 70% 96%);
 }
 
 .workspace-popover footer button.danger {

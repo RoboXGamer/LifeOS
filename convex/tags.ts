@@ -2,9 +2,11 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { requireWorkspaceOwner } from "./lib/auth";
 import { cleanTagName } from "./lib/validation";
+import { tagDoc } from "./lib/validators";
 
 export const list = query({
   args: { workspaceId: v.id("workspaces") },
+  returns: v.array(tagDoc),
   handler: async (ctx, args) => {
     await requireWorkspaceOwner(ctx, args.workspaceId);
     const tags = await ctx.db
@@ -19,6 +21,13 @@ export const list = query({
 
 export const listWithCounts = query({
   args: { workspaceId: v.id("workspaces") },
+  returns: v.array(
+    v.object({
+      ...tagDoc.fields,
+      itemCount: v.number(),
+      countIsLimited: v.boolean(),
+    }),
+  ),
   handler: async (ctx, args) => {
     await requireWorkspaceOwner(ctx, args.workspaceId);
     const tags = await ctx.db
@@ -47,6 +56,7 @@ export const listWithCounts = query({
 
 export const rename = mutation({
   args: { tagId: v.id("tags"), name: v.string() },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const tag = await ctx.db.get("tags", args.tagId);
     if (!tag) throw new Error("Tag not found.");
@@ -70,6 +80,7 @@ export const rename = mutation({
 
 export const remove = mutation({
   args: { tagId: v.id("tags") },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const tag = await ctx.db.get("tags", args.tagId);
     if (!tag) return null;
@@ -78,7 +89,8 @@ export const remove = mutation({
       .query("itemTags")
       .withIndex("by_tagId", (q) => q.eq("tagId", tag._id))
       .first();
-    if (link) throw new Error("Remove this Tag from its Items before deleting it.");
+    if (link)
+      throw new Error("Remove this Tag from its Items before deleting it.");
     await ctx.db.delete("tags", tag._id);
     return null;
   },

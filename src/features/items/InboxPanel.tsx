@@ -186,7 +186,7 @@ export function InboxPanel(props: {
                 permanent.
               </p>
             </div>
-            <a href="/app/settings">Save</a>
+            <a href="/app/login">Log in</a>
           </div>
         </Show>
       </aside>

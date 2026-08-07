@@ -103,6 +103,10 @@ export function WorkspaceProvider(props: ParentProps) {
     const cleanName = name.trim();
     if (!cleanName) return;
     setError(null);
+    const expectedUpdatedAt = state.workspaces.find(
+      (workspace) => workspace.id === workspaceId,
+    )?.updatedAt;
+    if (expectedUpdatedAt === undefined) return;
     setState((draft) => {
       const workspace = draft.workspaces.find(
         (item) => item.id === workspaceId,
@@ -113,7 +117,11 @@ export function WorkspaceProvider(props: ParentProps) {
       }
     });
     try {
-      yield renameWorkspaceMutation({ workspaceId, name: cleanName });
+      yield renameWorkspaceMutation({
+        workspaceId,
+        name: cleanName,
+        expectedUpdatedAt,
+      });
     } catch (reason) {
       recordFailure(reason);
     }
