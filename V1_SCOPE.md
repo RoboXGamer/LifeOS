@@ -48,10 +48,11 @@ Every Item has one of five fixed types:
 | Note    | What do I need to remember?  |
 | Event   | When is something happening? |
 | Expense | What money went out?         |
-| Payment | What money came in?          |
+| Income  | What money came in?          |
 
 Tasks may have a status of `Todo`, `In Progress`, or `Done`. Notes and Events do
-not have task status. Expenses and Payments use a settled/pending value instead.
+not have task status. Expenses use `Planned` or `Spent`; Income uses `Expected`
+or `Received`.
 
 ## Item data
 
@@ -67,7 +68,7 @@ status
 priority
 dueDate
 amount
-isSettled
+financialState
 archived
 description
 parentId
@@ -79,8 +80,8 @@ updatedAt
 ```
 
 Only the title is required during quick capture. Type-specific fields should be
-validated: status belongs only to Tasks, while amount and settlement belong
-only to Expenses and Payments.
+validated: status belongs only to Tasks, while amount and financial state belong
+only to Expenses and Income.
 
 Priority is numeric: `1` is highest, followed by `2` and `3`; no value means the
 Item is not prioritized.

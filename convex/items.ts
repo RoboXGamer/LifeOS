@@ -21,8 +21,15 @@ const itemType = v.union(
   v.literal("Note"),
   v.literal("Event"),
   v.literal("Expense"),
-  v.literal("Payment"),
+  v.literal("Income"),
 );
+const financialState = v.union(
+  v.literal("Planned"),
+  v.literal("Spent"),
+  v.literal("Expected"),
+  v.literal("Received"),
+);
+const nullableFinancialState = v.union(financialState, v.null());
 const nullableItemType = v.union(itemType, v.null());
 const itemStatus = v.union(
   v.literal("Todo"),
@@ -45,13 +52,14 @@ const itemInput = {
   priority: nullablePriority,
   dueDate: v.union(v.string(), v.null()),
   amount: v.union(v.number(), v.null()),
-  isSettled: v.union(v.boolean(), v.null()),
+  financialState: nullableFinancialState,
   description: v.union(v.string(), v.null()),
   parentId: v.union(v.id("items"), v.null()),
   tags: v.array(v.string()),
 };
 
-type ItemType = "Task" | "Note" | "Event" | "Expense" | "Payment";
+type ItemType = "Task" | "Note" | "Event" | "Expense" | "Income";
+type FinancialState = "Planned" | "Spent" | "Expected" | "Received";
 type ItemStatus = "Todo" | "In Progress" | "Done";
 type ItemInput = {
   title: string;
@@ -61,7 +69,7 @@ type ItemInput = {
   priority: 1 | 2 | 3 | null;
   dueDate: string | null;
   amount: number | null;
-  isSettled: boolean | null;
+  financialState: FinancialState | null;
   description: string | null;
   parentId: Id<"items"> | null;
   tags: string[];
@@ -121,22 +129,23 @@ function normalizedFields(input: ItemInput) {
       ...shared,
       status: input.status ?? "Todo",
       amount: undefined,
-      isSettled: undefined,
+      financialState: undefined,
     };
   }
-  if (type === "Expense" || type === "Payment") {
+  if (type === "Expense" || type === "Income") {
     return {
       ...shared,
       status: undefined,
       amount: cleanAmount(input.amount),
-      isSettled: input.isSettled ?? false,
+      financialState:
+        input.financialState ?? (type === "Expense" ? "Planned" : "Expected"),
     };
   }
   return {
     ...shared,
     status: undefined,
     amount: undefined,
-    isSettled: undefined,
+    financialState: undefined,
   };
 }
 

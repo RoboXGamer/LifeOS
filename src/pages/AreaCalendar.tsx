@@ -169,7 +169,7 @@ export default function AreaCalendar() {
           label="Finances"
           value={
             calendarItems().filter(
-              (item) => item.type === "Expense" || item.type === "Payment",
+              (item) => item.type === "Expense" || item.type === "Income",
             ).length
           }
         />

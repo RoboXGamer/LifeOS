@@ -2,7 +2,12 @@ import { For, Show } from "solid-js";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { Icon } from "../../Icon";
 import type { ItemView } from "./context";
-import { dueDateLabel, itemIcon, priorityLabel } from "./types";
+import {
+  dueDateLabel,
+  itemIcon,
+  itemStatusLabel,
+  priorityLabel,
+} from "./types";
 import "./ItemRow.css";
 
 export function ItemRow(props: {
@@ -74,11 +79,18 @@ export function ItemRow(props: {
           </span>
         )}
       </Show>
-      <Show when={item().type === "Expense" || item().type === "Payment"}>
+      <Show when={item().type === "Expense" || item().type === "Income"}>
         <span
-          class={["product-settlement", { settled: item().isSettled === true }]}
+          class={[
+            "product-financial-state",
+            {
+              realized:
+                item().financialState === "Spent" ||
+                item().financialState === "Received",
+            },
+          ]}
         >
-          {item().isSettled ? "Settled" : "Unsettled"}
+          {itemStatusLabel(item())}
         </span>
       </Show>
       <Show when={item().amount !== undefined}>

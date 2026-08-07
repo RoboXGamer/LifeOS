@@ -290,7 +290,7 @@ Better Auth user
 - [ ] Define username normalization, reserved names, allowed characters,
       minimum/maximum lengths, and cooldown enforcement.
 - [x] Define Workspace and Area name/description limits.
-- [ ] Define exact Item type, status, priority, amount, settlement, due-date,
+- [ ] Define exact Item type, status, priority, amount, financial-state, due-date,
       and description rules.
 - [ ] Require an Item type when `areaId` is non-null.
 - [ ] Validate single-level parent rules and shared location.
@@ -450,7 +450,7 @@ Milestone A is complete when all Phase 1–3 acceptance criteria pass.
 
 - [x] Title and optional type for Inbox capture/editing.
 - [x] Require type before Area assignment.
-- [x] Type-specific status/amount/settled fields.
+- [x] Type-specific status, amount, and financial-state fields.
 - [x] Area, due date, priority, description, tags, and parent.
 - [x] Preserve fields when changing type but clear invalid persisted fields on
       save with an understandable warning.

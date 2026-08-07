@@ -6,14 +6,14 @@ export const itemTypes: ItemType[] = [
   "Note",
   "Event",
   "Expense",
-  "Payment",
+  "Income",
 ];
 
 export function itemIcon(type: ItemType | undefined): IconName {
   if (type === "Task") return "checkSquare";
   if (type === "Event") return "calendar";
   if (type === "Expense") return "expense";
-  if (type === "Payment") return "payment";
+  if (type === "Income") return "payment";
   if (type === "Note") return "description";
   return "inbox";
 }
@@ -28,11 +28,11 @@ export function priorityLabel(
 }
 
 export function itemStatusLabel(
-  item: Pick<ItemView, "type" | "status" | "isSettled">,
+  item: Pick<ItemView, "type" | "status" | "financialState">,
 ): string | null {
   if (item.type === "Task") return item.status ?? "Todo";
-  if (item.type === "Expense") return item.isSettled ? "Paid" : "Unpaid";
-  if (item.type === "Payment") return item.isSettled ? "Received" : "Pending";
+  if (item.type === "Expense") return item.financialState ?? "Planned";
+  if (item.type === "Income") return item.financialState ?? "Expected";
   return null;
 }
 

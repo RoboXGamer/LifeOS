@@ -13,10 +13,15 @@ import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { createMutation, createQuery, toError } from "../../convex";
 import { useWorkspaces } from "../workspaces/context";
 
-export type ItemType = "Task" | "Note" | "Event" | "Expense" | "Payment";
+export type ItemType = "Task" | "Note" | "Event" | "Expense" | "Income";
 export type ItemStatus = "Todo" | "In Progress" | "Done";
 export type ItemPriority = 1 | 2 | 3;
-export type ItemView = Doc<"items"> & { tags: string[] };
+export type FinancialState = "Planned" | "Spent" | "Expected" | "Received";
+export type ItemView = Omit<Doc<"items">, "type" | "financialState"> & {
+  type?: ItemType;
+  financialState?: FinancialState;
+  tags: string[];
+};
 
 export interface ItemInput {
   title: string;
@@ -26,7 +31,7 @@ export interface ItemInput {
   priority: ItemPriority | null;
   dueDate: string | null;
   amount: number | null;
-  isSettled: boolean | null;
+  financialState: FinancialState | null;
   description: string | null;
   parentId: Id<"items"> | null;
   tags: string[];
@@ -72,12 +77,13 @@ function optimisticItem(
     priority: input.priority ?? undefined,
     dueDate: input.dueDate || undefined,
     amount:
-      input.type === "Expense" || input.type === "Payment"
+      input.type === "Expense" || input.type === "Income"
         ? (input.amount ?? undefined)
         : undefined,
-    isSettled:
-      input.type === "Expense" || input.type === "Payment"
-        ? (input.isSettled ?? false)
+    financialState:
+      input.type === "Expense" || input.type === "Income"
+        ? (input.financialState ??
+          (input.type === "Expense" ? "Planned" : "Expected"))
         : undefined,
     description: input.description || undefined,
     parentId: input.parentId,
@@ -161,7 +167,7 @@ export function ItemProvider(props: ParentProps) {
           priority: null,
           dueDate: null,
           amount: null,
-          isSettled: null,
+          financialState: null,
           description: null,
           parentId: null,
           tags: [],
@@ -221,12 +227,13 @@ export function ItemProvider(props: ParentProps) {
         priority: input.priority ?? undefined,
         dueDate: input.dueDate || undefined,
         amount:
-          input.type === "Expense" || input.type === "Payment"
+          input.type === "Expense" || input.type === "Income"
             ? (input.amount ?? undefined)
             : undefined,
-        isSettled:
-          input.type === "Expense" || input.type === "Payment"
-            ? (input.isSettled ?? false)
+        financialState:
+          input.type === "Expense" || input.type === "Income"
+            ? (input.financialState ??
+              (input.type === "Expense" ? "Planned" : "Expected"))
             : undefined,
         description: input.description || undefined,
         updatedAt: Date.now(),

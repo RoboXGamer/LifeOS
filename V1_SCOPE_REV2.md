@@ -111,13 +111,14 @@ Everything captured or stored is an Item. V1 has five fixed types:
 | Note    | Something to remember         |
 | Event   | Something happening at a time |
 | Expense | Money going out               |
-| Payment | Money coming in               |
+| Income  | Money coming in               |
 
 A newly captured Inbox Item may have no type. Before an Item leaves Inbox for an
 Area, it must have a type.
 
-Tasks may have `Todo`, `In Progress`, or `Done` status. Only Expenses and
-Payments have amount and settlement fields. Items may also have a due date,
+Tasks may have `Todo`, `In Progress`, or `Done` status. Expenses use `Planned`
+or `Spent`; Income uses `Expected` or `Received`. Only Expenses and Income have
+amount and financial-state fields. Items may also have a due date,
 priority, description, tags, and a single-level parent.
 
 Item color and favorites are not V1 concepts and must be removed from the

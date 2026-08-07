@@ -169,22 +169,6 @@
   gap: 10px;
 }
 
-.settled-field {
-  min-height: 64px;
-  display: flex !important;
-  align-items: end;
-  padding: 9px 4px;
-}
-
-.settled-field input {
-  width: 17px;
-  height: 17px;
-}
-
-.settled-field span {
-  font-size: 0.74rem !important;
-}
-
 .item-form label > small,
 .field-note {
   color: hsl(225 12% 50%);
@@ -512,10 +496,5 @@
 @media (max-width: 390px) {
   .item-form-grid {
     grid-template-columns: 1fr;
-  }
-
-  .settled-field {
-    min-height: auto;
-    align-items: center;
   }
 }

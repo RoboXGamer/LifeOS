@@ -16,7 +16,7 @@ const types: Array<ItemType | "All"> = [
   "Note",
   "Event",
   "Expense",
-  "Payment",
+  "Income",
 ];
 
 export default function AreaDetail() {

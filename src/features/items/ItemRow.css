@@ -122,7 +122,7 @@ button.product-priority:hover {
   white-space: nowrap;
 }
 .product-status,
-.product-settlement {
+.product-financial-state {
   padding: 4px 7px;
   border-radius: 7px;
   color: hsl(225 13% 43%);
@@ -132,7 +132,7 @@ button.product-priority:hover {
   white-space: nowrap;
 }
 .product-status.status-done,
-.product-settlement.settled {
+.product-financial-state.realized {
   color: #317054;
   background: #eaf8f1;
 }
@@ -174,7 +174,7 @@ button.product-priority:hover {
   }
 
   .product-status,
-  .product-settlement {
+  .product-financial-state {
     display: none;
   }
 }

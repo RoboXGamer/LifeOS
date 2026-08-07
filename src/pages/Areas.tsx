@@ -155,7 +155,7 @@ export default function Areas() {
       priority: item.priority ?? null,
       dueDate: item.dueDate ?? null,
       amount: item.amount ?? null,
-      isSettled: item.isSettled ?? null,
+      financialState: item.financialState ?? null,
       description: item.description ?? null,
       parentId: item.parentId,
       tags: item.tags,

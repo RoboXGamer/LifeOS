@@ -12,6 +12,7 @@ import type { Id } from "../../../convex/_generated/dataModel";
 import { Icon, type IconName } from "../../Icon";
 import {
   useItems,
+  type FinancialState,
   type ItemInput,
   type ItemPriority,
   type ItemStatus,
@@ -236,7 +237,10 @@ function ItemForm(props: {
   );
   const [dueDate, setDueDate] = createSignal(initialDueDate);
   const [amount, setAmount] = createSignal(initial?.amount?.toString() ?? "");
-  const [isSettled, setIsSettled] = createSignal(initial?.isSettled ?? false);
+  const [financialState, setFinancialState] = createSignal<FinancialState>(
+    initial?.financialState ??
+      (initial?.type === "Income" ? "Expected" : "Planned"),
+  );
   const [description, setDescription] = createSignal(
     initial?.description ?? "",
   );
@@ -253,7 +257,7 @@ function ItemForm(props: {
         item._id !== initial?._id &&
         item.areaId === (areaId() || null),
     );
-  const moneyType = () => type() === "Expense" || type() === "Payment";
+  const moneyType = () => type() === "Expense" || type() === "Income";
 
   const submit = async (event: SubmitEvent) => {
     event.preventDefault();
@@ -276,7 +280,15 @@ function ItemForm(props: {
       priority: priority() ? (Number(priority()) as ItemPriority) : null,
       dueDate: dueDate() || null,
       amount: moneyType() && amount() ? Number(amount()) : null,
-      isSettled: moneyType() ? isSettled() : null,
+      financialState: moneyType()
+        ? type() === "Expense"
+          ? financialState() === "Spent"
+            ? "Spent"
+            : "Planned"
+          : financialState() === "Received"
+            ? "Received"
+            : "Expected"
+        : null,
       description: description().trim() || null,
       parentId: (parentId() || null) as Id<"items"> | null,
       tags: tags()
@@ -331,9 +343,13 @@ function ItemForm(props: {
             <span>Type</span>
             <select
               value={type() ?? ""}
-              onInput={(event) =>
-                setType((event.currentTarget.value || null) as ItemType | null)
-              }
+              onInput={(event) => {
+                const nextType = (event.currentTarget.value ||
+                  null) as ItemType | null;
+                setType(nextType);
+                if (nextType === "Expense") setFinancialState("Planned");
+                if (nextType === "Income") setFinancialState("Expected");
+              }}
             >
               <option value="">Unsorted</option>
               <For each={itemTypes}>
@@ -410,13 +426,27 @@ function ItemForm(props: {
                 onInput={(event) => setAmount(event.currentTarget.value)}
               />
             </label>
-            <label class="settled-field">
-              <input
-                type="checkbox"
-                checked={isSettled()}
-                onInput={(event) => setIsSettled(event.currentTarget.checked)}
-              />
-              <span>{type() === "Expense" ? "Paid" : "Received"}</span>
+            <label>
+              <span>Status</span>
+              <select
+                value={financialState()}
+                onInput={(event) =>
+                  setFinancialState(event.currentTarget.value as FinancialState)
+                }
+              >
+                <Show
+                  when={type() === "Expense"}
+                  fallback={
+                    <>
+                      <option value="Expected">Expected</option>
+                      <option value="Received">Received</option>
+                    </>
+                  }
+                >
+                  <option value="Planned">Planned</option>
+                  <option value="Spent">Spent</option>
+                </Show>
+              </select>
             </label>
           </div>
         </Show>

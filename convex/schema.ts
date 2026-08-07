@@ -6,7 +6,14 @@ const itemType = v.union(
   v.literal("Note"),
   v.literal("Event"),
   v.literal("Expense"),
-  v.literal("Payment"),
+  v.literal("Income"),
+);
+
+const financialState = v.union(
+  v.literal("Planned"),
+  v.literal("Spent"),
+  v.literal("Expected"),
+  v.literal("Received"),
 );
 
 const itemStatus = v.union(
@@ -71,7 +78,7 @@ export default defineSchema({
     priority: v.optional(v.union(v.literal(1), v.literal(2), v.literal(3))),
     dueDate: v.optional(v.string()),
     amount: v.optional(v.number()),
-    isSettled: v.optional(v.boolean()),
+    financialState: v.optional(financialState),
     description: v.optional(v.string()),
     parentId: v.union(v.id("items"), v.null()),
     archived: v.boolean(),
