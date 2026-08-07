@@ -83,9 +83,7 @@ export default function Settings() {
   return (
     <section class="lifecycle-page">
       <header class="lifecycle-header">
-        <span>Account</span>
         <h2>Settings</h2>
-        <p>Identity, session, and Workspace essentials only.</p>
       </header>
       <Show when={message()}>
         {(value) => <p class="organization-message">{value()}</p>}

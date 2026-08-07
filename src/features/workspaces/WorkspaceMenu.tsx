@@ -1,9 +1,6 @@
 import { For, Show, createSignal } from "solid-js";
-import type { Doc } from "../../../convex/_generated/dataModel";
-import { api } from "../../../convex/_generated/api";
 import { Icon } from "../../Icon";
 import Avatar from "../../Avatar";
-import { createQuery } from "../../convex";
 import { useWorkspaces } from "./context";
 import "./WorkspaceMenu.css";
 
@@ -12,17 +9,6 @@ export function WorkspaceMenu() {
   const [open, setOpen] = createSignal(false);
   const [creating, setCreating] = createSignal(false);
   const [renaming, setRenaming] = createSignal(false);
-  const [archivedOpen, setArchivedOpen] = createSignal(false);
-  const [deleteTarget, setDeleteTarget] =
-    createSignal<Doc<"workspaces"> | null>(null);
-  const removalImpact = createQuery(
-    api.workspaces.removalImpact,
-    () => {
-      const workspace = deleteTarget();
-      return workspace ? { workspaceId: workspace._id } : "skip";
-    },
-    { initialValue: undefined },
-  );
 
   const submitCreate = (event: SubmitEvent) => {
     event.preventDefault();
@@ -165,103 +151,9 @@ export function WorkspaceMenu() {
               <Icon name="archive" size={16} />
               Archive
             </button>
-            <button
-              type="button"
-              onClick={() => setArchivedOpen((value) => !value)}
-            >
-              <Icon name="archive" size={16} />
-              Archived
-            </button>
           </footer>
-
-          <Show when={archivedOpen()}>
-            <div class="archived-workspaces">
-              <For
-                each={model.archivedWorkspaces()}
-                fallback={<p>No archived Workspaces.</p>}
-              >
-                {(workspace) => (
-                  <article>
-                    <strong>{workspace.name}</strong>
-                    <button
-                      type="button"
-                      onClick={() => model.restoreWorkspace(workspace._id)}
-                    >
-                      Restore
-                    </button>
-                    <button
-                      type="button"
-                      class="danger"
-                      onClick={() => setDeleteTarget({ ...workspace })}
-                    >
-                      Delete
-                    </button>
-                  </article>
-                )}
-              </For>
-            </div>
-          </Show>
         </section>
       </Show>
-      <Show when={deleteTarget()} keyed>
-        {(workspace) => (
-          <WorkspaceDeleteDialog
-            workspace={workspace}
-            areaCount={removalImpact()?.areaCount}
-            itemCount={removalImpact()?.itemCount}
-            onClose={() => setDeleteTarget(null)}
-            onConfirm={(confirmation) => {
-              model.deleteWorkspace(workspace._id, confirmation);
-              setDeleteTarget(null);
-            }}
-          />
-        )}
-      </Show>
-    </div>
-  );
-}
-
-function WorkspaceDeleteDialog(props: {
-  workspace: Doc<"workspaces">;
-  areaCount?: number;
-  itemCount?: number;
-  onClose: () => void;
-  onConfirm: (confirmation: string) => void;
-}) {
-  const submit = (event: SubmitEvent) => {
-    event.preventDefault();
-    const confirmation =
-      new FormData(event.currentTarget as HTMLFormElement)
-        .get("confirmation")
-        ?.toString() ?? "";
-    props.onConfirm(confirmation);
-  };
-  return (
-    <div class="workspace-delete-backdrop">
-      <section
-        class="workspace-delete-dialog"
-        role="alertdialog"
-        aria-modal="true"
-      >
-        <span>Permanent deletion</span>
-        <h3>Delete {props.workspace.name}?</h3>
-        <p>
-          This removes {props.areaCount ?? "all"} Areas and{" "}
-          {props.itemCount ?? "all"} Items. It cannot be undone.
-        </p>
-        <form onSubmit={submit}>
-          <label>
-            Type “{props.workspace.name}” to confirm
-            <input name="confirmation" autocomplete="off" autofocus required />
-          </label>
-          <footer>
-            <button type="button" onClick={props.onClose}>
-              Cancel
-            </button>
-            <button type="submit">Delete permanently</button>
-          </footer>
-        </form>
-      </section>
     </div>
   );
 }

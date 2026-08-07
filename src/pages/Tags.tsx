@@ -3,7 +3,7 @@ import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { createMutation, createQuery, toError } from "../convex";
 import { Icon } from "../Icon";
-import { ItemRow } from "../features/items/ItemRow";
+import { ItemTableHeader, ItemTableRow } from "../features/items/ItemTable";
 import { useItems } from "../features/items/context";
 import { useItemPanelRoute } from "../features/items/routing";
 import { useWorkspaces } from "../features/workspaces/context";
@@ -62,9 +62,7 @@ export default function Tags() {
   return (
     <section class="organization-page">
       <header class="organization-header">
-        <span>Organize</span>
         <h2>Tags</h2>
-        <p>Workspace-wide labels are reused automatically when Items save.</p>
       </header>
       <Show when={error()}>
         {(message) => <p class="organization-message">{message()}</p>}
@@ -128,7 +126,7 @@ export default function Tags() {
             )}
           </For>
         </div>
-        <div class="tag-results">
+        <div class="tag-results item-table-shell">
           <div class="tag-result-heading">
             <h3>#{selectedTag()?.name ?? "Select a Tag"}</h3>
             <small>{taggedItems().length} active Items</small>
@@ -137,19 +135,22 @@ export default function Tags() {
             when={taggedItems().length > 0}
             fallback={<p class="search-empty">No active Items use this Tag.</p>}
           >
-            <For each={taggedItems()} keyed={(item) => item._id}>
-              {(item) => (
-                <ItemRow
-                  item={item()}
-                  areaName={
-                    items.areas().find((area) => area._id === item().areaId)
-                      ?.name ?? "Inbox"
-                  }
-                  onOpen={(id) => panel.openItem(id)}
-                  onToggleTask={(id, done) => void items.setTaskDone(id, done)}
-                />
-              )}
-            </For>
+            <ItemTableHeader />
+            <div class="area-product-list">
+              <For each={taggedItems()} keyed={(item) => item._id}>
+                {(item) => (
+                  <section class="area-family">
+                    <ItemTableRow
+                      item={item()}
+                      onOpen={(id) => panel.openItem(id)}
+                      onToggleTask={(id, done) =>
+                        void items.setTaskDone(id, done)
+                      }
+                    />
+                  </section>
+                )}
+              </For>
+            </div>
           </Show>
         </div>
       </div>

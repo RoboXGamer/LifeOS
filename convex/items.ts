@@ -5,6 +5,7 @@ import { mutation, query } from "./_generated/server";
 import {
   requireAreaOwner,
   requireItemOwner,
+  requireProfile,
   requireWorkspaceOwner,
 } from "./lib/auth";
 import {
@@ -264,9 +265,7 @@ export const listToday = query({
     ]);
     const visible = items.filter(
       (item) =>
-        !item.archived &&
-        item.type === "Task" &&
-        (item.areaId === null || areaIds.has(item.areaId)),
+        !item.archived && (item.areaId === null || areaIds.has(item.areaId)),
     );
     return await Promise.all(visible.map((item) => itemWithTags(ctx, item)));
   },
@@ -491,8 +490,10 @@ export const setArchived = mutation({
   handler: async (ctx, args) => {
     const { item } = await requireItemOwner(ctx, args.itemId);
     const { root, children } = await family(ctx, item);
+    const members =
+      args.archived && item.parentId ? [item] : [root, ...children];
     const now = Date.now();
-    for (const member of [root, ...children]) {
+    for (const member of members) {
       await ctx.db.patch("items", member._id, {
         archived: args.archived,
         updatedAt: now,
@@ -505,12 +506,23 @@ export const setArchived = mutation({
 export const removalImpact = query({
   args: { itemId: v.id("items") },
   handler: async (ctx, args) => {
-    const { item } = await requireItemOwner(ctx, args.itemId);
+    await requireProfile(ctx);
+    const item = await ctx.db.get("items", args.itemId);
+    if (!item) {
+      return {
+        rootId: args.itemId,
+        rootTitle: "",
+        itemCount: 0,
+      };
+    }
+    await requireWorkspaceOwner(ctx, item.workspaceId);
     const { root, children } = await family(ctx, item);
+    const target = item.parentId ? item : root;
+    const members = item.parentId ? [item] : [root, ...children];
     return {
-      rootId: root._id,
-      rootTitle: root.title,
-      itemCount: 1 + children.length,
+      rootId: target._id,
+      rootTitle: target.title,
+      itemCount: members.length,
     };
   },
 });
@@ -520,12 +532,17 @@ export const remove = mutation({
   handler: async (ctx, args) => {
     const { item } = await requireItemOwner(ctx, args.itemId);
     const { root, children } = await family(ctx, item);
-    const members = [root, ...children];
+    const target = item.parentId ? item : root;
+    const members = item.parentId ? [item] : [root, ...children];
     if (members.some((member) => !member.archived)) {
-      throw new Error("Archive this Item family before deleting it.");
+      throw new Error(
+        item.parentId
+          ? "Archive this Item before deleting it."
+          : "Archive this Item family before deleting it.",
+      );
     }
-    if (args.confirmation.trim() !== root.title) {
-      throw new Error("Type the parent Item title exactly to confirm deletion.");
+    if (args.confirmation.trim() !== target.title) {
+      throw new Error("Type the Item title exactly to confirm deletion.");
     }
     for (const member of members) {
       const links = await ctx.db

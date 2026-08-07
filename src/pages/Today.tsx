@@ -3,8 +3,8 @@ import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { createQuery } from "../convex";
 import { Icon } from "../Icon";
-import { ItemRow } from "../features/items/ItemRow";
-import { localDateKey, longDateLabel } from "../features/items/dates";
+import { ItemTableHeader, ItemTableRow } from "../features/items/ItemTable";
+import { localDateKey } from "../features/items/dates";
 import { useItems, type ItemView } from "../features/items/context";
 import { useItemPanelRoute } from "../features/items/routing";
 import { useWorkspaces } from "../features/workspaces/context";
@@ -28,8 +28,10 @@ export default function Today() {
     [],
     { key: "_id" },
   );
-  const incomplete = () => rows.filter((item) => item.status !== "Done");
-  const completed = () => rows.filter((item) => item.status === "Done");
+  const openItems = () => rows.filter((item) => item.status !== "Done");
+  const completedTasks = () =>
+    rows.filter((item) => item.type === "Task" && item.status === "Done");
+  const tasks = () => rows.filter((item) => item.type === "Task");
 
   const toggle = async (itemId: Id<"items">, done: boolean) => {
     setRows((draft) => {
@@ -39,26 +41,10 @@ export default function Today() {
     await items.setTaskDone(itemId, done);
   };
 
-  const row = (item: () => ItemView) => (
-    <ItemRow
-      item={item()}
-      areaName={
-        items.areas().find((area) => area._id === item().areaId)?.name ??
-        "Inbox"
-      }
-      onOpen={(id) => panel.openItem(id)}
-      onToggleTask={(id, done) => void toggle(id, done)}
-    />
-  );
-
   return (
     <section class="retrieval-page">
       <header class="retrieval-header">
-        <div>
-          <span>Focus</span>
-          <h2>Today</h2>
-          <p>{longDateLabel(today)}</p>
-        </div>
+        <h2>Today</h2>
         <button
           type="button"
           class="primary-action"
@@ -76,43 +62,47 @@ export default function Today() {
               <Icon name="checkSquare" size={25} />
             </span>
             <h3>Your day is clear</h3>
-            <p>Tasks dated today will gather here automatically.</p>
+            <p>Items dated today will gather here automatically.</p>
           </div>
         }
       >
         <div class="retrieval-scroll">
-          <section class="today-progress">
-            <div>
-              <strong>
-                {completed().length} of {rows.length}
-              </strong>
-              <span>completed today</span>
-            </div>
-            <i>
-              <b
-                style={{
-                  width: `${rows.length ? (completed().length / rows.length) * 100 : 0}%`,
-                }}
-              />
-            </i>
-          </section>
-          <section class="retrieval-section">
-            <header>
-              <h3>Open</h3>
-              <small>{incomplete().length} tasks</small>
-            </header>
-            <For each={incomplete()} keyed={(item) => item._id}>
-              {row}
-            </For>
-          </section>
-          <Show when={completed().length > 0}>
-            <details class="retrieval-section">
-              <summary>Completed · {completed().length}</summary>
-              <For each={completed()} keyed={(item) => item._id}>
-                {row}
-              </For>
-            </details>
+          <Show when={tasks().length > 0}>
+            <section class="today-progress">
+              <div>
+                <strong>
+                  {completedTasks().length} of {tasks().length}
+                </strong>
+                <span>tasks completed today</span>
+              </div>
+              <i>
+                <b
+                  style={{
+                    width: `${(completedTasks().length / tasks().length) * 100}%`,
+                  }}
+                />
+              </i>
+            </section>
           </Show>
+          <div class="today-item-table item-table-shell">
+            <ItemTableHeader />
+            <div class="area-product-list">
+              <For
+                each={[...openItems(), ...completedTasks()]}
+                keyed={(item) => item._id}
+              >
+                {(item) => (
+                  <section class="area-family">
+                    <ItemTableRow
+                      item={item()}
+                      onOpen={(id) => panel.openItem(id)}
+                      onToggleTask={(id, done) => void toggle(id, done)}
+                    />
+                  </section>
+                )}
+              </For>
+            </div>
+          </div>
         </div>
       </Show>
     </section>

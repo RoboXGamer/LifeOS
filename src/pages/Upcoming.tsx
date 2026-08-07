@@ -2,7 +2,7 @@ import { For, Show } from "solid-js";
 import { api } from "../../convex/_generated/api";
 import { createQuery } from "../convex";
 import { Icon } from "../Icon";
-import { ItemRow } from "../features/items/ItemRow";
+import { ItemTableHeader, ItemTableRow } from "../features/items/ItemTable";
 import { compactDateLabel, localDateKey } from "../features/items/dates";
 import { useItems, type ItemView } from "../features/items/context";
 import { useItemPanelRoute } from "../features/items/routing";
@@ -38,11 +38,7 @@ export default function Upcoming() {
   return (
     <section class="retrieval-page">
       <header class="retrieval-header">
-        <div>
-          <span>Plan ahead</span>
-          <h2>Upcoming</h2>
-          <p>The next 150 dated Tasks and Events in this Workspace.</p>
-        </div>
+        <h2>Upcoming</h2>
         <button
           type="button"
           class="primary-action"
@@ -67,27 +63,27 @@ export default function Upcoming() {
         <div class="retrieval-scroll">
           <For each={groups()} keyed={(group) => group[0]}>
             {(group) => (
-              <section class="retrieval-section">
+              <section class="retrieval-section item-table-shell">
                 <header>
                   <h3>{compactDateLabel(group()[0])}</h3>
                   <small>{group()[1].length} items</small>
                 </header>
-                <For each={group()[1]} keyed={(item) => item._id}>
-                  {(item) => (
-                    <ItemRow
-                      item={item()}
-                      areaName={
-                        items.areas().find((area) => area._id === item().areaId)
-                          ?.name ?? "Inbox"
-                      }
-                      dateLabel={compactDateLabel(item().dueDate!)}
-                      onOpen={(id) => panel.openItem(id)}
-                      onToggleTask={(id, done) =>
-                        void items.setTaskDone(id, done)
-                      }
-                    />
-                  )}
-                </For>
+                <ItemTableHeader />
+                <div class="area-product-list">
+                  <For each={group()[1]} keyed={(item) => item._id}>
+                    {(item) => (
+                      <section class="area-family">
+                        <ItemTableRow
+                          item={item()}
+                          onOpen={(id) => panel.openItem(id)}
+                          onToggleTask={(id, done) =>
+                            void items.setTaskDone(id, done)
+                          }
+                        />
+                      </section>
+                    )}
+                  </For>
+                </div>
               </section>
             )}
           </For>

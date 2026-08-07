@@ -1,5 +1,5 @@
 import type { IconName } from "../../Icon";
-import type { ItemType } from "./context";
+import type { ItemPriority, ItemType, ItemView } from "./context";
 
 export const itemTypes: ItemType[] = [
   "Task",
@@ -16,6 +16,24 @@ export function itemIcon(type: ItemType | undefined): IconName {
   if (type === "Payment") return "payment";
   if (type === "Note") return "description";
   return "inbox";
+}
+
+export function priorityLabel(
+  priority: ItemPriority | undefined,
+): "High" | "Medium" | "Low" | null {
+  if (priority === 1) return "High";
+  if (priority === 2) return "Medium";
+  if (priority === 3) return "Low";
+  return null;
+}
+
+export function itemStatusLabel(
+  item: Pick<ItemView, "type" | "status" | "isSettled">,
+): string | null {
+  if (item.type === "Task") return item.status ?? "Todo";
+  if (item.type === "Expense") return item.isSettled ? "Paid" : "Unpaid";
+  if (item.type === "Payment") return item.isSettled ? "Received" : "Pending";
+  return null;
 }
 
 export function dueDateLabel(value: string | undefined): string | null {

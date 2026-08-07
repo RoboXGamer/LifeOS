@@ -33,20 +33,15 @@ export default function Archive() {
   const [removal, setRemoval] = createSignal<Removal | null>(null);
   const [confirmation, setConfirmation] = createSignal("");
   const [error, setError] = createSignal<string | null>(null);
-  const selectedItemImpact = createQuery(
-    api.items.removalImpact,
-    () => {
-      const selected = removal();
-      return selected?.kind === "item" ? { itemId: selected.id } : "skip";
-    },
-  );
-  const selectedAreaImpact = createQuery(
-    api.areas.removalImpact,
-    () => {
-      const selected = removal();
-      return selected?.kind === "area" ? { areaId: selected.id } : "skip";
-    },
-  );
+  const [deleting, setDeleting] = createSignal(false);
+  const selectedItemImpact = createQuery(api.items.removalImpact, () => {
+    const selected = removal();
+    return selected?.kind === "item" ? { itemId: selected.id } : "skip";
+  });
+  const selectedAreaImpact = createQuery(api.areas.removalImpact, () => {
+    const selected = removal();
+    return selected?.kind === "area" ? { areaId: selected.id } : "skip";
+  });
   const selectedWorkspaceImpact = createQuery(
     api.workspaces.removalImpact,
     () => {
@@ -56,8 +51,12 @@ export default function Archive() {
         : "skip";
     },
   );
-  const topArchivedItems = () =>
-    items.archivedItems.filter((item) => item.parentId === null);
+  const visibleArchivedItems = () => {
+    const archivedIds = new Set(items.archivedItems.map((item) => item._id));
+    return items.archivedItems.filter(
+      (item) => item.parentId === null || !archivedIds.has(item.parentId),
+    );
+  };
   const openRemoval = (target: Removal) => {
     setRemoval(target);
     setConfirmation("");
@@ -75,7 +74,8 @@ export default function Archive() {
   };
   const confirmRemoval = async () => {
     const selected = removal();
-    if (!selected) return;
+    if (!selected || deleting()) return;
+    setDeleting(true);
     try {
       if (selected.kind === "item") {
         await itemRemoveMutation({
@@ -96,14 +96,12 @@ export default function Archive() {
       setRemoval(null);
     } catch (reason) {
       setError(toError(reason).message);
+    } finally {
+      setDeleting(false);
     }
   };
 
-  const archiveSection = (
-    title: string,
-    count: number,
-    content: Element,
-  ) => (
+  const archiveSection = (title: string, count: number, content: Element) => (
     <section class="archive-section">
       <header>
         <h3>{title}</h3>
@@ -121,9 +119,7 @@ export default function Archive() {
   return (
     <section class="lifecycle-page">
       <header class="lifecycle-header">
-        <span>Lifecycle</span>
         <h2>Archive</h2>
-        <p>Restore safely, or permanently delete only after confirmation.</p>
       </header>
       <Show when={error()}>
         {(message) => <p class="organization-message">{message()}</p>}
@@ -131,8 +127,8 @@ export default function Archive() {
       <div class="lifecycle-scroll">
         {archiveSection(
           "Items",
-          topArchivedItems().length,
-          <For each={topArchivedItems()} keyed={(item) => item._id}>
+          visibleArchivedItems().length,
+          <For each={visibleArchivedItems()} keyed={(item) => item._id}>
             {(item) => (
               <article class="archive-row">
                 <span>
@@ -146,12 +142,17 @@ export default function Archive() {
                   <strong>{item().title}</strong>
                   <span>
                     {item().type ?? "Unsorted"} ·{" "}
-                    {
-                      items.archivedItems.filter(
-                        (child) => child.parentId === item()._id,
-                      ).length
-                    }{" "}
-                    children
+                    <Show
+                      when={item().parentId === null}
+                      fallback={<>Child Item</>}
+                    >
+                      {
+                        items.archivedItems.filter(
+                          (child) => child.parentId === item()._id,
+                        ).length
+                      }{" "}
+                      children
+                    </Show>
                   </span>
                 </button>
                 <div class="archive-actions">
@@ -290,10 +291,10 @@ export default function Archive() {
                 <button
                   type="button"
                   class="danger"
-                  disabled={confirmation() !== selected().name}
+                  disabled={deleting() || confirmation() !== selected().name}
                   onClick={() => void confirmRemoval()}
                 >
-                  Delete permanently
+                  {deleting() ? "Deleting…" : "Delete permanently"}
                 </button>
               </div>
             </section>

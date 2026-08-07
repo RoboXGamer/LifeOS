@@ -272,11 +272,15 @@ export function ItemProvider(props: ParentProps) {
     const source = archived ? activeItems : archivedItems;
     const targetIds = new Set<Id<"items">>();
     const selected = source.find((item) => item._id === itemId);
-    const rootId = selected?.parentId ?? selected?._id;
-    if (rootId) {
-      targetIds.add(rootId);
-      for (const item of source) {
-        if (item.parentId === rootId) targetIds.add(item._id);
+    if (archived && selected?.parentId) {
+      targetIds.add(selected._id);
+    } else {
+      const rootId = selected?.parentId ?? selected?._id;
+      if (rootId) {
+        targetIds.add(rootId);
+        for (const item of source) {
+          if (item.parentId === rootId) targetIds.add(item._id);
+        }
       }
     }
     const moved = source

@@ -30,7 +30,6 @@ export default function AreaCalendar() {
   const [view, setView] = createSignal<CalendarView>("week");
   const [anchor, setAnchor] = createSignal(new Date());
   const [selectedDate, setSelectedDate] = createSignal(localDateKey());
-  const [search, setSearch] = createSignal("");
   const range = () => {
     if (view() === "month") return monthRange(anchor());
     const start = startOfWeek(anchor());
@@ -38,26 +37,35 @@ export default function AreaCalendar() {
     return { fromDate: localDateKey(start), toDate: localDateKey(end) };
   };
   const source = createQuery(
-    api.items.listAreaRange,
-    () => ({ areaId: areaId(), ...range() }),
+    api.items.listByArea,
+    () => ({ areaId: areaId() }),
     { initialValue: [] },
   );
-  const filtered = () => {
-    const query = search().trim().toLowerCase();
-    return (source() ?? []).filter(
-      (item) =>
-        !query ||
-        `${item.title} ${item.type ?? ""} ${item.tags.join(" ")}`
-          .toLowerCase()
-          .includes(query),
-    );
+  const calendarItems = () => {
+    const currentRange = range();
+    const merged = new Map<Id<"items">, ItemView>();
+    const include = (item: ItemView) => {
+      if (
+        item.areaId === areaId() &&
+        item.dueDate &&
+        item.dueDate >= currentRange.fromDate &&
+        item.dueDate <= currentRange.toDate
+      ) {
+        merged.set(item._id, item);
+      }
+    };
+    for (const item of source() ?? []) include(item);
+    for (const item of items.activeItems) {
+      include(item);
+    }
+    return [...merged.values()];
   };
   const weekDays = () =>
     Array.from({ length: 7 }, (_, index) =>
       addDays(startOfWeek(anchor()), index),
     );
   const itemsFor = (date: string) =>
-    filtered().filter((item) => item.dueDate === date);
+    calendarItems().filter((item) => item.dueDate === date);
   const selectedItems = () => itemsFor(selectedDate());
   const overdue = () =>
     items.activeItems
@@ -108,18 +116,14 @@ export default function AreaCalendar() {
   return (
     <section class="area-calendar-page">
       <header class="calendar-product-header">
-        <div class="calendar-title">
-          <div class="area-breadcrumb">
-            <Link to="/app/areas">Areas</Link>
-            <Icon name="chevronRight" size={14} />
-            <Link to="/app/areas/$areaId" params={{ areaId: areaId() }}>
-              {area()?.name ?? "Area"}
-            </Link>
-            <Icon name="chevronRight" size={14} />
-            <span>Calendar</span>
-          </div>
-          <h1>{area()?.name ?? "Area"} Calendar</h1>
-          <p>Plan dated Items without losing the context of this Area.</p>
+        <div class="area-breadcrumb">
+          <Link to="/app/areas">Areas</Link>
+          <Icon name="chevronRight" size={14} />
+          <Link to="/app/areas/$areaId" params={{ areaId: areaId() }}>
+            {area()?.name ?? "Area"}
+          </Link>
+          <Icon name="chevronRight" size={14} />
+          <span>Calendar</span>
         </div>
         <button class="primary-action" onClick={() => createOn(selectedDate())}>
           <Icon name="plus" size={17} /> New Item
@@ -137,14 +141,6 @@ export default function AreaCalendar() {
           </button>
           <button onClick={goToday}>Today</button>
         </div>
-        <label>
-          <Icon name="search" size={16} />
-          <input
-            value={search()}
-            placeholder="Search calendar…"
-            onInput={(event) => setSearch(event.currentTarget.value)}
-          />
-        </label>
         <div class="calendar-view-tabs">
           <For each={["week", "agenda", "month"] as CalendarView[]}>
             {(mode) => (
@@ -160,19 +156,19 @@ export default function AreaCalendar() {
       </div>
 
       <div class="calendar-stats">
-        <Metric label="In range" value={filtered().length} />
+        <Metric label="In range" value={calendarItems().length} />
         <Metric
           label="Tasks"
-          value={filtered().filter((item) => item.type === "Task").length}
+          value={calendarItems().filter((item) => item.type === "Task").length}
         />
         <Metric
           label="Events"
-          value={filtered().filter((item) => item.type === "Event").length}
+          value={calendarItems().filter((item) => item.type === "Event").length}
         />
         <Metric
           label="Finances"
           value={
-            filtered().filter(
+            calendarItems().filter(
               (item) => item.type === "Expense" || item.type === "Payment",
             ).length
           }
@@ -192,7 +188,11 @@ export default function AreaCalendar() {
             />
           </Show>
           <Show when={view() === "agenda"}>
-            <AgendaView items={filtered()} onOpen={open} onToggle={toggle} />
+            <AgendaView
+              items={calendarItems()}
+              onOpen={open}
+              onToggle={toggle}
+            />
           </Show>
           <Show when={view() === "month"}>
             <MonthView

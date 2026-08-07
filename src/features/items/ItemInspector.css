@@ -153,6 +153,10 @@
   outline: 3px solid color-mix(in srgb, var(--color-purple) 10%, transparent);
 }
 
+.item-tags-input::-webkit-calendar-picker-indicator {
+  display: none !important;
+}
+
 .item-title-field input {
   padding-block: 11px;
   font-size: 0.86rem;
@@ -239,22 +243,7 @@
 }
 
 .item-view-title {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.item-view-title > span {
-  width: 43px;
-  height: 43px;
-  display: grid;
-  place-items: center;
-  flex: 0 0 auto;
-  border-radius: 13px;
-  color: var(--color-purple);
-  background: color-mix(in srgb, var(--color-purple) 10%, white);
+  padding: 1px 0 3px;
 }
 
 .item-view-title h3 {
@@ -262,33 +251,77 @@
   letter-spacing: -0.02em;
 }
 
-.item-view-title p {
-  margin-top: 3px;
-  color: hsl(225 12% 48%);
-  font-size: 0.7rem;
-}
-
 .item-property-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 7px;
+  gap: 10px;
 }
 
-.item-property-grid > div {
+.item-property-row {
   display: grid;
-  gap: 2px;
-  padding: 10px;
-  border-radius: 11px;
-  background: hsl(228 45% 97%);
+  grid-template-columns: 22px 78px minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+  min-height: 28px;
 }
 
-.item-property-grid span {
+.item-property-icon {
+  display: grid;
+  place-items: center;
+  color: hsl(225 20% 48%);
+}
+
+.item-property-label {
   color: hsl(225 12% 49%);
-  font-size: 0.62rem;
+  font-size: 0.74rem;
 }
 
-.item-property-grid strong {
+.item-property-value {
+  min-width: 0;
+  color: hsl(230 32% 19%);
   font-size: 0.74rem;
+  overflow-wrap: anywhere;
+}
+
+.item-property-value.strong {
+  font-weight: 750;
+}
+
+.item-property-badge {
+  width: max-content;
+  display: inline-flex;
+  align-items: center;
+  min-height: 25px;
+  border-radius: 8px;
+  padding: 4px 9px;
+  line-height: 1;
+}
+
+.item-property-badge.status-done,
+.item-property-badge.priority-low {
+  color: hsl(151 62% 32%);
+  background: hsl(148 55% 92%);
+}
+
+.item-property-badge.status-in-progress {
+  color: hsl(248 54% 46%);
+  background: hsl(248 70% 95%);
+}
+
+.item-property-badge.priority-high {
+  color: #c32e49;
+  background: #fff0f3;
+}
+
+.item-property-badge.priority-medium {
+  color: #93630d;
+  background: #fff6dc;
+}
+
+.item-property-badge.status-todo,
+.item-property-badge.status-none,
+.item-property-badge.priority-none {
+  color: hsl(225 12% 46%);
+  background: hsl(228 35% 95%);
 }
 
 .item-tag-list {

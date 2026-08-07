@@ -6,9 +6,10 @@ import {
   onSettled,
   untrack,
   type Accessor,
+  type Element,
 } from "solid-js";
 import type { Id } from "../../../convex/_generated/dataModel";
-import { Icon } from "../../Icon";
+import { Icon, type IconName } from "../../Icon";
 import {
   useItems,
   type ItemInput,
@@ -18,7 +19,7 @@ import {
   type ItemView,
 } from "./context";
 import { useItemPanelRoute } from "./routing";
-import { dueDateLabel, itemIcon, itemTypes } from "./types";
+import { itemIcon, itemStatusLabel, itemTypes, priorityLabel } from "./types";
 import "./ItemInspector.css";
 
 const statuses: ItemStatus[] = ["Todo", "In Progress", "Done"];
@@ -175,6 +176,25 @@ function InspectorHeader(props: {
         <Icon name="close" size={18} />
       </button>
     </header>
+  );
+}
+
+function ItemProperty(props: {
+  icon: IconName;
+  label: string;
+  strong?: boolean;
+  children: Element;
+}) {
+  return (
+    <div class="item-property-row">
+      <span class="item-property-icon">
+        <Icon name={props.icon} size={17} strokeWidth={1.8} />
+      </span>
+      <span class="item-property-label">{props.label}</span>
+      <span class={`item-property-value${props.strong ? " strong" : ""}`}>
+        {props.children}
+      </span>
+    </div>
   );
 }
 
@@ -438,6 +458,7 @@ function ItemForm(props: {
         <label>
           <span>Tags</span>
           <input
+            class="item-tags-input"
             value={tags()}
             list="life-os-tags"
             placeholder="urgent, waiting, reference"
@@ -509,56 +530,47 @@ function ItemViewPanel(props: {
           )}
         </Show>
         <div class="item-view-title">
-          <span>
-            <Icon name={itemIcon(item().type)} size={22} />
-          </span>
-          <div>
-            <h3>{item().title}</h3>
-            <p>
-              {area()?.name ?? "Inbox"}
-              <Show when={item().type}> · {item().type}</Show>
-            </p>
-          </div>
+          <h3>{item().title}</h3>
         </div>
 
         <div class="item-property-grid">
-          <Show when={item().status}>
-            <div>
-              <span>Status</span>
-              <strong>{item().status}</strong>
-            </div>
-          </Show>
-          <Show when={item().priority}>
-            <div>
-              <span>Priority</span>
-              <strong>
-                {item().priority === 1
-                  ? "High"
-                  : item().priority === 2
-                    ? "Medium"
-                    : "Low"}
-              </strong>
-            </div>
-          </Show>
-          <Show when={dueDateLabel(item().dueDate)}>
+          <ItemProperty icon={itemIcon(item().type)} label="Type">
+            {item().type ?? "Unsorted"}
+          </ItemProperty>
+          <ItemProperty icon="folder" label="Area">
+            {area()?.name ?? "Inbox"}
+          </ItemProperty>
+          <ItemProperty icon="list" label="Status">
+            <span
+              class={[
+                "item-property-badge",
+                `status-${itemStatusLabel(item())?.toLowerCase().replace(" ", "-") ?? "none"}`,
+              ]}
+            >
+              {itemStatusLabel(item()) ?? "None"}
+            </span>
+          </ItemProperty>
+          <ItemProperty icon="flag" label="Priority">
+            <span
+              class={[
+                "item-property-badge",
+                `priority-${priorityLabel(item().priority)?.toLowerCase() ?? "none"}`,
+              ]}
+            >
+              {priorityLabel(item().priority) ?? "None"}
+            </span>
+          </ItemProperty>
+          <Show when={item().dueDate}>
             {(date) => (
-              <div>
-                <span>Due</span>
-                <strong>{date()}</strong>
-              </div>
+              <ItemProperty icon="calendar" label="Due Date" strong>
+                {date()}
+              </ItemProperty>
             )}
           </Show>
           <Show when={item().amount !== undefined}>
-            <div>
-              <span>Amount</span>
-              <strong>{item().amount?.toLocaleString()}</strong>
-            </div>
-          </Show>
-          <Show when={item().isSettled !== undefined}>
-            <div>
-              <span>State</span>
-              <strong>{item().isSettled ? "Settled" : "Open"}</strong>
-            </div>
+            <ItemProperty icon="currency" label="Amount" strong>
+              {item().amount?.toLocaleString()}
+            </ItemProperty>
           </Show>
         </div>
 

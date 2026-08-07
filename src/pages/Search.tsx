@@ -74,11 +74,7 @@ export default function Search() {
   return (
     <section class="retrieval-page search-page">
       <header class="retrieval-header">
-        <div>
-          <span>Everything, instantly</span>
-          <h2>Search</h2>
-          <p>Find Items by title, description, type, tag, or Area.</p>
-        </div>
+        <h2>Search</h2>
       </header>
       <form class="full-search" onSubmit={submit}>
         <Icon name="search" size={20} />
